@@ -9,6 +9,7 @@ import {
     TextInput,
     Modal,
     BackHandler,
+    Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -55,6 +56,49 @@ export function ProfileScreen() {
     const unlockedAchievements = user?.achievements || [];
     const allAchievements = Object.values(ACHIEVEMENTS);
 
+    const getUnlockDescription = (achievementId: string): string => {
+        switch (achievementId) {
+            case 'firstExpense':
+                return 'Log your first expense to unlock this achievement.';
+            case 'budgetBoss':
+                return 'Stay under your daily budget for 7 consecutive days to unlock this achievement.';
+            case 'savingsChamp':
+                return 'Create and reach your first savings goal to unlock this achievement.';
+            case 'firstWorkout':
+                return 'Complete your first workout to unlock this achievement.';
+            case 'hydrationHero':
+                return 'Log water intake for 7 consecutive days to unlock this achievement.';
+            case 'fitnessFreak':
+                return 'Complete workouts for 30 consecutive days to unlock this achievement.';
+            case 'firstMeditation':
+                return 'Complete your first meditation session to unlock this achievement.';
+            case 'journalJourney':
+                return 'Write 10 journal entries to unlock this achievement.';
+            case 'zenMaster':
+                return 'Complete 100 meditation sessions to unlock this achievement.';
+            case 'weekStreak':
+                return 'Maintain an overall streak of 7 days to unlock this achievement.';
+            case 'monthStreak':
+                return 'Maintain an overall streak of 30 days to unlock this achievement.';
+            case 'levelUp5':
+                return 'Reach level 5 to unlock this achievement.';
+            case 'levelUp10':
+                return 'Reach level 10 to unlock this achievement.';
+            default:
+                return 'Complete the requirements to unlock this achievement.';
+        }
+    };
+
+    const handleAchievementPress = (achievement: any) => {
+        if (!unlockedAchievements.includes(achievement.id)) {
+            Alert.alert(
+                achievement.title,
+                getUnlockDescription(achievement.id),
+                [{ text: 'OK' }]
+            );
+        }
+    };
+
     const handleSaveName = () => {
         if (!newName.trim()) return;
         if (user) {
@@ -72,7 +116,7 @@ export function ProfileScreen() {
     }
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'left', 'right']}>
             <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
             
             {/* Header with Settings Icon */}
@@ -173,6 +217,7 @@ export function ProfileScreen() {
                                     icon={achievement.icon}
                                     title={achievement.title}
                                     unlocked={unlockedAchievements.includes(achievement.id)}
+                                    onPress={() => handleAchievementPress(achievement)}
                                 />
                             ))}
                         </View>

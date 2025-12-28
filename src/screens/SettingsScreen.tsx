@@ -30,7 +30,7 @@ interface SettingsScreenProps {
 }
 
 export function SettingsScreen({ onClose }: SettingsScreenProps) {
-    const { state, dispatch, resetData } = useApp();
+    const { state, dispatch, resetData, updateSettings } = useApp();
     const { colors, styleConfig, isDark } = useTheme();
     const { financial, health, mindfulness, settings } = state;
 
@@ -83,25 +83,16 @@ export function SettingsScreen({ onClose }: SettingsScreenProps) {
         setShowMeditationModal(false);
     };
 
-    const handleStreakModeChange = (mode: 'all' | 'any') => {
-        dispatch({
-            type: 'UPDATE_SETTINGS',
-            payload: { streakMode: mode },
-        });
+    const handleStreakModeChange = async (mode: 'all' | 'any') => {
+        await updateSettings({ streakMode: mode });
     };
 
-    const handleThemeChange = (theme: 'dark' | 'light') => {
-        dispatch({
-            type: 'UPDATE_SETTINGS',
-            payload: { theme },
-        });
+    const handleThemeChange = async (theme: 'dark' | 'light') => {
+        await updateSettings({ theme });
     };
 
-    const handleStyleChange = (style: AppStyle) => {
-        dispatch({
-            type: 'UPDATE_SETTINGS',
-            payload: { style },
-        });
+    const handleStyleChange = async (style: AppStyle) => {
+        await updateSettings({ style });
     };
 
     const handleResetData = () => {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Spacing, FontSize, FontWeight } from '../../constants/theme';
 import { useApp, calculateLevel } from '../../context/AppContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -100,9 +100,11 @@ interface AchievementBadgeProps {
     title: string;
     unlocked?: boolean;
     size?: 'sm' | 'md' | 'lg';
+    onPress?: () => void;
+    unlockDescription?: string;
 }
 
-export function AchievementBadge({ icon, title, unlocked = true, size = 'md' }: AchievementBadgeProps) {
+export function AchievementBadge({ icon, title, unlocked = true, size = 'md', onPress, unlockDescription }: AchievementBadgeProps) {
     const { colors, styleConfig } = useTheme();
     const sizes = {
         sm: { badge: 40, icon: 20 },
@@ -113,7 +115,11 @@ export function AchievementBadge({ icon, title, unlocked = true, size = 'md' }: 
     const s = sizes[size];
 
     return (
-        <View style={styles.achievementContainer}>
+        <TouchableOpacity
+            style={styles.achievementContainer}
+            onPress={onPress}
+            disabled={unlocked} // Only allow tapping on locked achievements
+        >
             <View
                 style={[
                     styles.achievementBadge,
@@ -128,7 +134,7 @@ export function AchievementBadge({ icon, title, unlocked = true, size = 'md' }: 
             <Text style={[styles.achievementTitle, { color: colors.textSecondary }, !unlocked && { opacity: 0.5 }]} numberOfLines={2}>
                 {title}
             </Text>
-        </View>
+        </TouchableOpacity>
     );
 }
 

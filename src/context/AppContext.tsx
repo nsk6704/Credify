@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useReducer, useEffect, ReactNode, useCallback } from 'react';
+import { AppState as RNAppState } from 'react-native';
 import { AppState, AppAction, User, Streaks, AppSettings, DailyChallenge } from '../types';
 import { XP_CONFIG, ACHIEVEMENTS, DAILY_CHALLENGES } from '../constants/gamification';
 import * as Database from '../lib/database';
@@ -292,6 +293,7 @@ interface AppContextType {
     checkAchievements: () => void;
     generateDailyChallenges: () => Promise<void>;
     completeChallenge: (challengeId: string) => void;
+    updateSettings: (settings: Partial<AppSettings>) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -370,6 +372,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
             await Database.saveSetting('dailyCalorieGoal', state.health.dailyCalorieGoal.toString());
             await Database.saveSetting('dailyStepGoal', state.health.dailyStepGoal.toString());
             await Database.saveSetting('meditationGoal', state.mindfulness.meditationGoal.toString());
+            await Database.saveSetting('theme', state.settings.theme);
+            await Database.saveSetting('style', state.settings.style);
+            await Database.saveSetting('streakMode', state.settings.streakMode);
         } catch (error) {
             console.error('Failed to save state to SQLite:', error);
         }
@@ -468,6 +473,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }
     }, [state.dailyChallenges]);
 
+    // Update settings and save immediately
+    const updateSettings = useCallback(async (newSettings: Partial<AppSettings>) => {
+        dispatch({ type: 'UPDATE_SETTINGS', payload: newSettings });
+        // Save settings immediately to database
+        try {
+            for (const [key, value] of Object.entries(newSettings)) {
+                await Database.saveSetting(key, value.toString());
+            }
+        } catch (error) {
+            console.error('Failed to save settings:', error);
+        }
+    }, []);
+
     // Check and auto-complete daily challenges based on user activity
     const checkDailyChallenges = useCallback(async () => {
         if (state.dailyChallenges.length === 0) return;
@@ -491,12 +509,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
             const challengeType = challenge.id.split('-').pop(); // Get the challenge type from ID
 
             switch (challengeType) {
-                // Financial challenges
                 case 'noSpend':
-                    // Complete if no expenses logged today AND user has used app before
-                    // We check at end of day or if they've done other activities
-                    shouldComplete = todayExpenses.length === 0 && 
-                        (todayWorkouts.length > 0 || todayMeditations.length > 0 || todayWater > 0);
+                    // Complete if no expenses logged today (checked at end of day)
+                    shouldComplete = todayExpenses.length === 0;
                     break;
                 case 'logAll':
                     shouldComplete = todayExpenses.length >= 3;
@@ -675,8 +690,100 @@ export function AppProvider({ children }: { children: ReactNode }) {
         state.mindfulness.meditations.length, state.mindfulness.journals.length,
         state.mindfulness.gratitudeLogs.length, state.dailyChallenges.length]);
 
+    // End-of-day check for all challenges (runs at 11 PM)
+    const checkEndOfDayChallenges = useCallback(async () => {
+        if (state.dailyChallenges.length === 0) return;
+
+        const now = new Date();
+        const isEndOfDay = now.getHours() >= 23;
+        
+        if (!isEndOfDay) return; // Only run at end of day
+
+        const today = format(new Date(), 'yyyy-MM-dd');
+        const todayExpenses = state.financial.expenses.filter(e => e.date === today);
+        const todayWorkouts = state.health.workouts.filter(w => w.date === today);
+        const todayWater = state.health.waterLogs.find(w => w.date === today)?.glasses || 0;
+        const todayMeditations = state.mindfulness.meditations.filter(m => m.date === today);
+        const todayMeditationMins = todayMeditations.reduce((sum, m) => sum + m.duration, 0);
+        const todayJournals = state.mindfulness.journals.filter(j => j.date === today);
+        const todayGratitude = state.mindfulness.gratitudeLogs.filter(g => g.date === today);
+        
+        const dailyBudget = state.financial.monthlyBudget > 0 ? state.financial.monthlyBudget / 30 : 0;
+        const todaySpent = todayExpenses.reduce((sum, e) => sum + e.amount, 0);
+
+        for (const challenge of state.dailyChallenges) {
+            if (challenge.completed || challenge.date !== today) continue;
+
+            let shouldComplete = false;
+            const challengeType = challenge.id.split('-').pop();
+
+            // Use the same logic as regular checks, but this ensures end-of-day completion
+            switch (challengeType) {
+                case 'noSpend':
+                    shouldComplete = todayExpenses.length === 0;
+                    break;
+                case 'logAll':
+                    shouldComplete = todayExpenses.length >= 3;
+                    break;
+                case 'underBudget':
+                    shouldComplete = dailyBudget > 0 && todaySpent <= dailyBudget * 0.8;
+                    break;
+                case 'workout':
+                    shouldComplete = todayWorkouts.length >= 1;
+                    break;
+                case 'hydrate':
+                    shouldComplete = todayWater >= 8;
+                    break;
+                case 'meditate':
+                    shouldComplete = todayMeditationMins >= 10;
+                    break;
+                case 'journal':
+                    shouldComplete = todayJournals.length >= 1;
+                    break;
+                case 'gratitude':
+                    shouldComplete = todayGratitude.length >= 1 && 
+                        (todayGratitude[0].items?.length >= 3 || todayGratitude.length >= 3);
+                    break;
+            }
+
+            if (shouldComplete) {
+                dispatch({ type: 'COMPLETE_CHALLENGE', payload: challenge.id });
+                dispatch({ type: 'ADD_XP', payload: challenge.xpReward });
+                await Database.completeChallenge(challenge.id);
+            }
+        }
+    }, [state.dailyChallenges, state.financial, state.health, state.mindfulness]);
+
+    // Periodic check for end-of-day challenge completions (every hour)
+    useEffect(() => {
+        const checkChallenges = () => {
+            if (!state.isLoading && state.dailyChallenges.length > 0) {
+                checkDailyChallenges();
+                checkEndOfDayChallenges(); // This will only complete at end of day
+            }
+        };
+
+        // Check immediately and then every hour
+        checkChallenges();
+        const interval = setInterval(checkChallenges, 60 * 60 * 1000); // 1 hour
+
+        return () => clearInterval(interval);
+    }, [state.isLoading, state.dailyChallenges.length, checkDailyChallenges, checkEndOfDayChallenges]);
+
+    // Check challenges when app comes to foreground
+    useEffect(() => {
+        const subscription = RNAppState.addEventListener('change', (nextAppState) => {
+            if (nextAppState === 'active' && !state.isLoading && state.dailyChallenges.length > 0) {
+                checkDailyChallenges();
+                checkEndOfDayChallenges();
+            }
+        });
+
+        return () => subscription?.remove();
+    }, [state.isLoading, state.dailyChallenges.length, checkDailyChallenges, checkEndOfDayChallenges]);
+
     return (
-        <AppContext.Provider value={{ state, dispatch, addXP, saveState, resetData, checkAchievements, generateDailyChallenges, completeChallenge }}>
+        <AppContext.Provider value={{ state, dispatch, addXP, saveState, resetData, checkAchievements, generateDailyChallenges, completeChallenge, updateSettings }}>
             {children}
         </AppContext.Provider>
     );

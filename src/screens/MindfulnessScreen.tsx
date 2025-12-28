@@ -9,6 +9,8 @@ import {
     TextInput,
     Modal,
     Vibration,
+    KeyboardAvoidingView,
+    Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,6 +20,7 @@ import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
 import { Button, Card } from '../components';
 import { MeditationSession, JournalEntry, MoodEntry, GratitudeLog } from '../types';
+import * as Database from '../lib/database';
 import { format } from 'date-fns';
 
 export function MindfulnessScreen() {
@@ -75,7 +78,7 @@ export function MindfulnessScreen() {
         setIsTimerRunning(true);
     };
 
-    const handleTimerComplete = () => {
+    const handleTimerComplete = async () => {
         setIsTimerRunning(false);
         if (timerRef.current) clearInterval(timerRef.current);
         Vibration.vibrate([500, 200, 500]);
@@ -88,12 +91,17 @@ export function MindfulnessScreen() {
             date: today,
             createdAt: new Date().toISOString(),
         };
+        
+        // Add to database first
+        await Database.addMeditation(meditation);
+        
+        // Then update state
         dispatch({ type: 'ADD_MEDITATION', payload: meditation });
         addXP(XP_CONFIG.rewards.completeMeditation);
         setShowMeditationModal(false);
     };
 
-    const handleSaveJournal = () => {
+    const handleSaveJournal = async () => {
         if (!journalContent.trim()) return;
 
         const journal: JournalEntry = {
@@ -103,13 +111,18 @@ export function MindfulnessScreen() {
             date: today,
             createdAt: new Date().toISOString(),
         };
+        
+        // Add to database first
+        await Database.addJournal(journal);
+        
+        // Then update state
         dispatch({ type: 'ADD_JOURNAL', payload: journal });
         addXP(XP_CONFIG.rewards.journalEntry);
         setJournalContent('');
         setShowJournalModal(false);
     };
 
-    const handleSaveMood = () => {
+    const handleSaveMood = async () => {
         const mood: MoodEntry = {
             id: Date.now().toString(),
             mood: selectedMood.id,
@@ -117,13 +130,18 @@ export function MindfulnessScreen() {
             date: today,
             createdAt: new Date().toISOString(),
         };
+        
+        // Add to database first
+        await Database.addMood(mood);
+        
+        // Then update state
         dispatch({ type: 'ADD_MOOD', payload: mood });
         addXP(XP_CONFIG.rewards.moodCheckIn);
         setMoodNotes('');
         setShowMoodModal(false);
     };
 
-    const handleSaveGratitude = () => {
+    const handleSaveGratitude = async () => {
         const items = gratitudeItems.filter(i => i.trim());
         if (items.length === 0) return;
 
@@ -133,6 +151,11 @@ export function MindfulnessScreen() {
             date: today,
             createdAt: new Date().toISOString(),
         };
+        
+        // Add to database first
+        await Database.addGratitude(gratitude);
+        
+        // Then update state
         dispatch({ type: 'ADD_GRATITUDE', payload: gratitude });
         addXP(XP_CONFIG.rewards.gratitudeLog);
         setGratitudeItems(['', '', '']);
@@ -150,9 +173,14 @@ export function MindfulnessScreen() {
         : '--';
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'left', 'right']}>
             <StatusBar barStyle={colors.statusBar} backgroundColor={colors.background} />
-            <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+            <KeyboardAvoidingView 
+                style={{ flex: 1 }} 
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
+            >
+                <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
                 {/* Header */}
                 <View style={styles.header}>
                     <Text style={[styles.title, { color: colors.textPrimary }]}>Mindfulness</Text>
@@ -279,6 +307,7 @@ export function MindfulnessScreen() {
 
                 <View style={styles.bottomPadding} />
             </ScrollView>
+            </KeyboardAvoidingView>
 
             {/* Meditation Modal */}
             <Modal

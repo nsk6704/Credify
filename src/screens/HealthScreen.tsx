@@ -8,6 +8,8 @@ import {
     TouchableOpacity,
     TextInput,
     Modal,
+    KeyboardAvoidingView,
+    Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Spacing, FontSize, FontWeight, BorderRadius } from '../constants/theme';
@@ -17,6 +19,7 @@ import { useTheme } from '../context/ThemeContext';
 import { Button, Card } from '../components';
 import { Workout, WaterLog } from '../types';
 import { format } from 'date-fns';
+import * as Database from '../lib/database';
 
 export function HealthScreen() {
     const { state, dispatch, addXP } = useApp();
@@ -35,17 +38,22 @@ export function HealthScreen() {
     const waterProgress = todayWater / health.dailyWaterGoal;
     const remainingWater = Math.max(0, health.dailyWaterGoal - todayWater);
 
-    const handleAddWater = () => {
+    const handleAddWater = async () => {
         const waterLog: WaterLog = {
             id: Date.now().toString(),
             glasses: 1,
             date: today,
         };
+        
+        // Add to database first
+        await Database.logWater(waterLog);
+        
+        // Then update state
         dispatch({ type: 'LOG_WATER', payload: waterLog });
         addXP(XP_CONFIG.rewards.logWater);
     };
 
-    const handleAddWorkout = () => {
+    const handleAddWorkout = async () => {
         if (!workoutDuration || parseInt(workoutDuration) <= 0) return;
 
         const workout: Workout = {
@@ -57,6 +65,10 @@ export function HealthScreen() {
             createdAt: new Date().toISOString(),
         };
 
+        // Add to database first
+        await Database.addWorkout(workout);
+        
+        // Then update state
         dispatch({ type: 'ADD_WORKOUT', payload: workout });
         addXP(XP_CONFIG.rewards.completeWorkout);
 
@@ -71,9 +83,14 @@ export function HealthScreen() {
     const waterGlasses = Array.from({ length: health.dailyWaterGoal }, (_, i) => i < todayWater);
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'left', 'right']}>
             <StatusBar barStyle={colors.statusBar} backgroundColor={colors.background} />
-            <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+            <KeyboardAvoidingView 
+                style={{ flex: 1 }} 
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
+            >
+                <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
                 {/* Header */}
                 <View style={styles.header}>
                     <Text style={[styles.title, { color: colors.textPrimary }]}>Health</Text>
@@ -207,6 +224,7 @@ export function HealthScreen() {
 
                 <View style={styles.bottomPadding} />
             </ScrollView>
+            </KeyboardAvoidingView>
 
             {/* Workout Modal */}
             <Modal

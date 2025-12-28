@@ -470,38 +470,49 @@ export async function loadAppState(): Promise<Partial<AppState>> {
     const moods = await getMoods() as any[];
 
     // Get settings
-    const monthlyBudget = await getSetting('monthlyBudget');
-    const currency = await getSetting('currency');
-    const dailyWaterGoal = await getSetting('dailyWaterGoal');
-    const dailyCalorieGoal = await getSetting('dailyCalorieGoal');
-    const dailyStepGoal = await getSetting('dailyStepGoal');
-    const meditationGoal = await getSetting('meditationGoal');
-
-    return {
-        user,
-        financial: {
-            expenses,
-            budgets,
-            goals,
-            monthlyBudget: monthlyBudget ? parseFloat(monthlyBudget) : 0,
-            currency: currency || '$',
-        },
-        health: {
-            workouts,
-            waterLogs,
-            meals,
-            dailyWaterGoal: dailyWaterGoal ? parseInt(dailyWaterGoal) : 8,
-            dailyCalorieGoal: dailyCalorieGoal ? parseInt(dailyCalorieGoal) : 2000,
-            dailyStepGoal: dailyStepGoal ? parseInt(dailyStepGoal) : 10000,
-        },
-        mindfulness: {
-            meditations,
-            journals,
-            gratitudeLogs,
-            moods,
-            meditationGoal: meditationGoal ? parseInt(meditationGoal) : 10,
-        },
-    };
+        const monthlyBudget = await getSetting('monthlyBudget');
+        const currency = await getSetting('currency');
+        const dailyWaterGoal = await getSetting('dailyWaterGoal');
+        const dailyCalorieGoal = await getSetting('dailyCalorieGoal');
+        const dailyStepGoal = await getSetting('dailyStepGoal');
+        const meditationGoal = await getSetting('meditationGoal');
+        const theme = await getSetting('theme');
+        const style = await getSetting('style');
+        const streakMode = await getSetting('streakMode');
+    
+        // Normalize streak mode to the expected type ('all' | 'any')
+        const normalizedStreakMode = (streakMode === 'all' || streakMode === 'any') ? (streakMode as 'all' | 'any') : 'all';
+    
+        return {
+            user,
+            financial: {
+                expenses,
+                budgets,
+                goals,
+                monthlyBudget: monthlyBudget ? parseFloat(monthlyBudget) : 0,
+                currency: currency || '$',
+            },
+            health: {
+                workouts,
+                waterLogs,
+                meals,
+                dailyWaterGoal: dailyWaterGoal ? parseInt(dailyWaterGoal) : 8,
+                dailyCalorieGoal: dailyCalorieGoal ? parseInt(dailyCalorieGoal) : 2000,
+                dailyStepGoal: dailyStepGoal ? parseInt(dailyStepGoal) : 10000,
+            },
+            mindfulness: {
+                meditations,
+                journals,
+                gratitudeLogs,
+                moods,
+                meditationGoal: meditationGoal ? parseInt(meditationGoal) : 10,
+            },
+            settings: {
+                theme: (theme as 'light' | 'dark') || 'dark',
+                style: (style as 'modern' | 'classic') || 'modern',
+                streakMode: normalizedStreakMode,
+            },
+        };
 }
 
 // Reset all data

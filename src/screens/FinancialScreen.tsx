@@ -9,6 +9,8 @@ import {
     TextInput,
     Modal,
     FlatList,
+    KeyboardAvoidingView,
+    Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Spacing, FontSize, FontWeight, BorderRadius, Currency } from '../constants/theme';
@@ -18,6 +20,7 @@ import { useTheme } from '../context/ThemeContext';
 import { Button, Card } from '../components';
 import { Expense } from '../types';
 import { format, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
+import * as Database from '../lib/database';
 
 export function FinancialScreen() {
     const { state, dispatch, addXP } = useApp();
@@ -47,7 +50,7 @@ export function FinancialScreen() {
         return { ...cat, total };
     }).filter(c => c.total > 0);
 
-    const handleAddExpense = () => {
+    const handleAddExpense = async () => {
         if (!amount || parseFloat(amount) <= 0) return;
 
         const newExpense: Expense = {
@@ -59,6 +62,10 @@ export function FinancialScreen() {
             createdAt: new Date().toISOString(),
         };
 
+        // Add to database first
+        await Database.addExpense(newExpense);
+        
+        // Then update state
         dispatch({ type: 'ADD_EXPENSE', payload: newExpense });
         addXP(XP_CONFIG.rewards.logExpense);
 
@@ -70,9 +77,14 @@ export function FinancialScreen() {
     const recentExpenses = financial.expenses.slice(0, 10);
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'left', 'right']}>
             <StatusBar barStyle={colors.statusBar} backgroundColor={colors.background} />
-            <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+            <KeyboardAvoidingView 
+                style={{ flex: 1 }} 
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
+            >
+                <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
                 {/* Header */}
                 <View style={styles.header}>
                     <Text style={[styles.title, { color: colors.textPrimary }]}>Financial</Text>
@@ -179,6 +191,7 @@ export function FinancialScreen() {
 
                 <View style={styles.bottomPadding} />
             </ScrollView>
+            </KeyboardAvoidingView>
 
             {/* Add Expense Modal */}
             <Modal
