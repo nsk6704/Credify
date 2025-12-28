@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
-import { AppState, AppAction, User, Streaks, AppSettings } from '../types';
-import { XP_CONFIG } from '../constants/gamification';
+import React, { createContext, useContext, useReducer, useEffect, ReactNode, useCallback } from 'react';
+import { AppState, AppAction, User, Streaks, AppSettings, DailyChallenge } from '../types';
+import { XP_CONFIG, ACHIEVEMENTS, DAILY_CHALLENGES } from '../constants/gamification';
 import * as Database from '../lib/database';
+import { format, subDays, differenceInDays, parseISO } from 'date-fns';
 
 // Initial state
 const initialStreaks: Streaks = {
@@ -288,6 +289,9 @@ interface AppContextType {
     addXP: (amount: number) => void;
     saveState: () => Promise<void>;
     resetData: () => Promise<void>;
+    checkAchievements: () => void;
+    generateDailyChallenges: () => Promise<void>;
+    completeChallenge: (challengeId: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -422,8 +426,257 @@ export function AppProvider({ children }: { children: ReactNode }) {
         dispatch({ type: 'ADD_XP', payload: amount });
     };
 
+    // Generate daily challenges
+    const generateDailyChallenges = useCallback(async () => {
+        const today = format(new Date(), 'yyyy-MM-dd');
+        
+        // Check if we already have challenges for today
+        const existingChallenges = await Database.getDailyChallenges(today);
+        if (existingChallenges && existingChallenges.length > 0) {
+            dispatch({ type: 'SET_DAILY_CHALLENGES', payload: existingChallenges });
+            return;
+        }
+
+        // Generate 3 random challenges (1 from each category)
+        const categories: ('financial' | 'health' | 'mindfulness')[] = ['financial', 'health', 'mindfulness'];
+        const newChallenges: DailyChallenge[] = categories.map(category => {
+            const categoryTemplates = DAILY_CHALLENGES[category];
+            const randomTemplate = categoryTemplates[Math.floor(Math.random() * categoryTemplates.length)];
+            return {
+                id: `${today}-${randomTemplate.id}`,
+                title: randomTemplate.title,
+                description: randomTemplate.description,
+                xpReward: randomTemplate.xpReward,
+                category,
+                completed: false,
+                date: today,
+            };
+        });
+
+        // Save to database and state
+        await Database.saveDailyChallenges(newChallenges);
+        dispatch({ type: 'SET_DAILY_CHALLENGES', payload: newChallenges });
+    }, []);
+
+    // Complete a challenge
+    const completeChallenge = useCallback(async (challengeId: string) => {
+        const challenge = state.dailyChallenges.find(c => c.id === challengeId);
+        if (challenge && !challenge.completed) {
+            dispatch({ type: 'COMPLETE_CHALLENGE', payload: challengeId });
+            dispatch({ type: 'ADD_XP', payload: challenge.xpReward });
+            await Database.completeChallenge(challengeId);
+        }
+    }, [state.dailyChallenges]);
+
+    // Check and auto-complete daily challenges based on user activity
+    const checkDailyChallenges = useCallback(async () => {
+        if (state.dailyChallenges.length === 0) return;
+
+        const today = format(new Date(), 'yyyy-MM-dd');
+        const todayExpenses = state.financial.expenses.filter(e => e.date === today);
+        const todayWorkouts = state.health.workouts.filter(w => w.date === today);
+        const todayWater = state.health.waterLogs.find(w => w.date === today)?.glasses || 0;
+        const todayMeditations = state.mindfulness.meditations.filter(m => m.date === today);
+        const todayMeditationMins = todayMeditations.reduce((sum, m) => sum + m.duration, 0);
+        const todayJournals = state.mindfulness.journals.filter(j => j.date === today);
+        const todayGratitude = state.mindfulness.gratitudeLogs.filter(g => g.date === today);
+        
+        const dailyBudget = state.financial.monthlyBudget > 0 ? state.financial.monthlyBudget / 30 : 0;
+        const todaySpent = todayExpenses.reduce((sum, e) => sum + e.amount, 0);
+
+        for (const challenge of state.dailyChallenges) {
+            if (challenge.completed || challenge.date !== today) continue;
+
+            let shouldComplete = false;
+            const challengeType = challenge.id.split('-').pop(); // Get the challenge type from ID
+
+            switch (challengeType) {
+                // Financial challenges
+                case 'noSpend':
+                    // Complete if no expenses logged today AND user has used app before
+                    // We check at end of day or if they've done other activities
+                    shouldComplete = todayExpenses.length === 0 && 
+                        (todayWorkouts.length > 0 || todayMeditations.length > 0 || todayWater > 0);
+                    break;
+                case 'logAll':
+                    shouldComplete = todayExpenses.length >= 3;
+                    break;
+                case 'underBudget':
+                    shouldComplete = dailyBudget > 0 && todaySpent <= dailyBudget * 0.8 && todayExpenses.length > 0;
+                    break;
+
+                // Health challenges
+                case 'workout':
+                    shouldComplete = todayWorkouts.length >= 1;
+                    break;
+                case 'hydrate':
+                    shouldComplete = todayWater >= 8;
+                    break;
+                case 'steps':
+                    // Steps challenge - we don't track steps yet, so skip
+                    break;
+
+                // Mindfulness challenges
+                case 'meditate':
+                    shouldComplete = todayMeditationMins >= 10;
+                    break;
+                case 'journal':
+                    shouldComplete = todayJournals.length >= 1;
+                    break;
+                case 'gratitude':
+                    shouldComplete = todayGratitude.length >= 1 && 
+                        (todayGratitude[0].items?.length >= 3 || todayGratitude.length >= 3);
+                    break;
+            }
+
+            if (shouldComplete) {
+                dispatch({ type: 'COMPLETE_CHALLENGE', payload: challenge.id });
+                dispatch({ type: 'ADD_XP', payload: challenge.xpReward });
+                await Database.completeChallenge(challenge.id);
+            }
+        }
+    }, [state.dailyChallenges, state.financial, state.health, state.mindfulness]);
+
+    // Check and unlock achievements
+    const checkAchievements = useCallback(() => {
+        if (!state.user) return;
+
+        const unlocked = state.user.achievements;
+        const unlock = (id: string) => {
+            if (!unlocked.includes(id)) {
+                dispatch({ type: 'UNLOCK_ACHIEVEMENT', payload: id });
+                const achievement = ACHIEVEMENTS[id as keyof typeof ACHIEVEMENTS];
+                if (achievement) {
+                    dispatch({ type: 'ADD_XP', payload: achievement.xpReward });
+                }
+            }
+        };
+
+        // Financial achievements
+        if (state.financial.expenses.length >= 1) {
+            unlock('firstExpense');
+        }
+
+        // Health achievements
+        if (state.health.workouts.length >= 1) {
+            unlock('firstWorkout');
+        }
+
+        // Check water logging streak (7 days)
+        const waterDates = new Set(state.health.waterLogs.map(w => w.date));
+        let waterStreak = 0;
+        for (let i = 0; i < 7; i++) {
+            const checkDate = format(subDays(new Date(), i), 'yyyy-MM-dd');
+            if (waterDates.has(checkDate)) {
+                waterStreak++;
+            } else {
+                break;
+            }
+        }
+        if (waterStreak >= 7) {
+            unlock('hydrationHero');
+        }
+
+        // Check workout streak (30 days)
+        const workoutDates = new Set(state.health.workouts.map(w => w.date));
+        let workoutStreak = 0;
+        for (let i = 0; i < 30; i++) {
+            const checkDate = format(subDays(new Date(), i), 'yyyy-MM-dd');
+            if (workoutDates.has(checkDate)) {
+                workoutStreak++;
+            } else {
+                break;
+            }
+        }
+        if (workoutStreak >= 30) {
+            unlock('fitnessFreak');
+        }
+
+        // Mindfulness achievements
+        if (state.mindfulness.meditations.length >= 1) {
+            unlock('firstMeditation');
+        }
+
+        if (state.mindfulness.journals.length >= 10) {
+            unlock('journalJourney');
+        }
+
+        if (state.mindfulness.meditations.length >= 100) {
+            unlock('zenMaster');
+        }
+
+        // Streak achievements
+        if (state.user.streaks.overall >= 7) {
+            unlock('weekStreak');
+        }
+
+        if (state.user.streaks.overall >= 30) {
+            unlock('monthStreak');
+        }
+
+        // Level achievements
+        if (state.user.level >= 5) {
+            unlock('levelUp5');
+        }
+
+        if (state.user.level >= 10) {
+            unlock('levelUp10');
+        }
+
+        // Budget boss achievement - check if under budget for 7 days
+        if (state.financial.monthlyBudget > 0) {
+            const dailyBudget = state.financial.monthlyBudget / 30;
+            let underBudgetDays = 0;
+            for (let i = 0; i < 7; i++) {
+                const checkDate = format(subDays(new Date(), i), 'yyyy-MM-dd');
+                const dayExpenses = state.financial.expenses
+                    .filter(e => e.date === checkDate)
+                    .reduce((sum, e) => sum + e.amount, 0);
+                if (dayExpenses <= dailyBudget) {
+                    underBudgetDays++;
+                } else {
+                    break;
+                }
+            }
+            if (underBudgetDays >= 7) {
+                unlock('budgetBoss');
+            }
+        }
+
+        // Savings champ - check if any financial goal is completed
+        const completedGoal = state.financial.goals.find(g => g.currentAmount >= g.targetAmount);
+        if (completedGoal) {
+            unlock('savingsChamp');
+        }
+    }, [state.user, state.financial, state.health, state.mindfulness]);
+
+    // Check achievements when state changes
+    useEffect(() => {
+        if (!state.isLoading && state.user) {
+            checkAchievements();
+        }
+    }, [state.financial.expenses.length, state.health.workouts.length, state.health.waterLogs.length, 
+        state.mindfulness.meditations.length, state.mindfulness.journals.length, 
+        state.user?.level, state.user?.streaks.overall]);
+
+    // Generate daily challenges on load
+    useEffect(() => {
+        if (!state.isLoading && state.user) {
+            generateDailyChallenges();
+        }
+    }, [state.isLoading, state.user]);
+
+    // Check daily challenges when user activity changes
+    useEffect(() => {
+        if (!state.isLoading && state.dailyChallenges.length > 0) {
+            checkDailyChallenges();
+        }
+    }, [state.financial.expenses.length, state.health.workouts.length, state.health.waterLogs, 
+        state.mindfulness.meditations.length, state.mindfulness.journals.length,
+        state.mindfulness.gratitudeLogs.length, state.dailyChallenges.length]);
+
     return (
-        <AppContext.Provider value={{ state, dispatch, addXP, saveState, resetData }}>
+        <AppContext.Provider value={{ state, dispatch, addXP, saveState, resetData, checkAchievements, generateDailyChallenges, completeChallenge }}>
             {children}
         </AppContext.Provider>
     );

@@ -34,7 +34,13 @@ export function HomeScreen() {
     const todayExpenses = financial.expenses.filter(e => e.date === todayStr);
     const todaySpent = todayExpenses.reduce((sum, e) => sum + e.amount, 0);
 
+    // Calculate this month's stats for budget tracking
+    const currentMonth = format(new Date(), 'yyyy-MM');
+    const monthExpenses = financial.expenses.filter(e => e.date.startsWith(currentMonth));
+    const monthSpent = monthExpenses.reduce((sum, e) => sum + e.amount, 0);
+
     const todayWorkouts = health.workouts.filter(w => w.date === todayStr);
+    const todayWorkoutMins = todayWorkouts.reduce((sum, w) => sum + w.duration, 0);
     const todayWater = health.waterLogs.find(w => w.date === todayStr)?.glasses || 0;
 
     const todayMeditations = mindfulness.meditations.filter(m => m.date === todayStr);
@@ -42,10 +48,20 @@ export function HomeScreen() {
 
     const completedChallenges = dailyChallenges.filter(c => c.completed).length;
 
-    // Calculate actual progress for financial (0 if no budget set)
+    // Calculate progress: shows how much spent of budget (0% = nothing spent, 100% = budget fully used)
     const financialProgress = financial.monthlyBudget > 0 
-        ? Math.max(0, 1 - (todaySpent / financial.monthlyBudget))
-        : 0;
+        ? Math.min(1, monthSpent / financial.monthlyBudget)
+        : -1; // -1 indicates no budget set
+    
+    // Water progress
+    const waterProgress = health.dailyWaterGoal > 0
+        ? Math.min(1, todayWater / health.dailyWaterGoal)
+        : -1;
+    
+    // Meditation progress
+    const meditationProgress = mindfulness.meditationGoal > 0
+        ? Math.min(1, todayMeditationMins / mindfulness.meditationGoal)
+        : -1;
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -106,23 +122,61 @@ export function HomeScreen() {
                         <Text style={[styles.sectionBadge, { color: colors.textSecondary }]}>{completedChallenges}/{dailyChallenges.length}</Text>
                     </View>
                     {dailyChallenges.length > 0 ? (
-                        dailyChallenges.slice(0, 3).map(challenge => (
-                            <View key={challenge.id} style={[styles.challengeItem, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: styleConfig.borderRadius.md }]}>
-                                <View style={[styles.challengeCheck, { borderColor: colors.border }, challenge.completed && { backgroundColor: colors.success, borderColor: colors.success }]}>
-                                    {challenge.completed && <Text style={styles.checkmark}>✓</Text>}
+                        dailyChallenges.slice(0, 3).map(challenge => {
+                            const categoryColors: Record<string, string> = {
+                                financial: colors.financial,
+                                health: colors.health,
+                                mindfulness: colors.mindfulness,
+                            };
+                            const categoryIcons: Record<string, keyof typeof Ionicons.glyphMap> = {
+                                financial: 'wallet-outline',
+                                health: 'fitness-outline',
+                                mindfulness: 'leaf-outline',
+                            };
+                            const categoryColor = categoryColors[challenge.category] || colors.primary;
+                            const categoryIcon = categoryIcons[challenge.category] || 'star-outline';
+                            
+                            return (
+                                <View 
+                                    key={challenge.id} 
+                                    style={[
+                                        styles.challengeItem, 
+                                        { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: styleConfig.borderRadius.md },
+                                        challenge.completed && { opacity: 0.7 }
+                                    ]}
+                                >
+                                    <View style={[
+                                        styles.challengeCheck, 
+                                        { backgroundColor: categoryColor + '20', borderColor: categoryColor },
+                                        challenge.completed && { backgroundColor: colors.success, borderColor: colors.success }
+                                    ]}>
+                                        {challenge.completed ? (
+                                            <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+                                        ) : (
+                                            <Ionicons name={categoryIcon} size={16} color={categoryColor} />
+                                        )}
+                                    </View>
+                                    <View style={styles.challengeInfo}>
+                                        <Text style={[
+                                            styles.challengeTitle, 
+                                            { color: colors.textPrimary }, 
+                                            challenge.completed && { color: colors.textMuted, textDecorationLine: 'line-through' }
+                                        ]}>
+                                            {challenge.title}
+                                        </Text>
+                                        <Text style={[styles.challengeDesc, { color: colors.textMuted }]}>{challenge.description}</Text>
+                                    </View>
+                                    <View style={[styles.challengeXPBadge, { backgroundColor: challenge.completed ? colors.success + '20' : colors.xp + '20' }]}>
+                                        <Text style={[styles.challengeXP, { color: challenge.completed ? colors.success : colors.xp }]}>
+                                            {challenge.completed ? '✓' : '+'}{challenge.xpReward}
+                                        </Text>
+                                    </View>
                                 </View>
-                                <View style={styles.challengeInfo}>
-                                    <Text style={[styles.challengeTitle, { color: colors.textPrimary }, challenge.completed && { color: colors.textMuted }]}>
-                                        {challenge.title}
-                                    </Text>
-                                    <Text style={[styles.challengeDesc, { color: colors.textMuted }]}>{challenge.description}</Text>
-                                </View>
-                                <Text style={[styles.challengeXP, { color: colors.xp }]}>+{challenge.xpReward} XP</Text>
-                            </View>
-                        ))
+                            );
+                        })
                     ) : (
                         <Card style={styles.emptyCard}>
-                            <Text style={[styles.emptyText, { color: colors.textMuted }]}>No challenges yet. Start using the app to unlock daily challenges.</Text>
+                            <Text style={[styles.emptyText, { color: colors.textMuted }]}>Loading daily challenges...</Text>
                         </Card>
                     )}
                 </View>
@@ -176,28 +230,48 @@ export function HomeScreen() {
 
                     <SectionCard
                         title="Financial Health"
-                        subtitle={`${financial.expenses.length} transactions logged`}
+                        subtitle={financial.monthlyBudget > 0 
+                            ? `${Currency.format(monthSpent)} of ${Currency.format(financial.monthlyBudget)} spent`
+                            : 'Set budget in Settings'}
                         iconName="wallet-outline"
                         color={colors.financial}
                         progress={financialProgress}
+                        disabled={financialProgress < 0}
                         onPress={() => navigation.navigate('Financial')}
                     />
 
                     <SectionCard
-                        title="Physical Wellness"
-                        subtitle={`${health.workouts.length} workouts completed`}
+                        title="Water Intake"
+                        subtitle={health.dailyWaterGoal > 0
+                            ? `${todayWater} of ${health.dailyWaterGoal} glasses today`
+                            : 'Set water goal in Settings'}
+                        iconName="water-outline"
+                        color={colors.info}
+                        progress={waterProgress}
+                        disabled={waterProgress < 0}
+                        onPress={() => navigation.navigate('Health')}
+                    />
+
+                    <SectionCard
+                        title="Workouts"
+                        subtitle={todayWorkouts.length > 0
+                            ? `${todayWorkoutMins} mins today (${todayWorkouts.length} session${todayWorkouts.length > 1 ? 's' : ''})`
+                            : `${health.workouts.length} total workouts logged`}
                         iconName="fitness-outline"
                         color={colors.health}
-                        progress={todayWater / health.dailyWaterGoal}
+                        progress={todayWorkouts.length > 0 ? 1 : 0}
                         onPress={() => navigation.navigate('Health')}
                     />
 
                     <SectionCard
                         title="Mental Clarity"
-                        subtitle={`${mindfulness.meditations.length} meditation sessions`}
+                        subtitle={mindfulness.meditationGoal > 0
+                            ? `${todayMeditationMins} of ${mindfulness.meditationGoal} mins today`
+                            : 'Set meditation goal in Settings'}
                         iconName="leaf-outline"
                         color={colors.mindfulness}
-                        progress={todayMeditationMins / mindfulness.meditationGoal}
+                        progress={meditationProgress}
+                        disabled={meditationProgress < 0}
                         onPress={() => navigation.navigate('Mindfulness')}
                     />
                 </View>
@@ -318,9 +392,14 @@ const styles = StyleSheet.create({
         fontSize: FontSize.xs,
         marginTop: 2,
     },
+    challengeXPBadge: {
+        paddingHorizontal: Spacing.sm,
+        paddingVertical: Spacing.xs,
+        borderRadius: 12,
+    },
     challengeXP: {
         fontSize: FontSize.xs,
-        fontWeight: FontWeight.semibold,
+        fontWeight: FontWeight.bold,
     },
     emptyCard: {
         alignItems: 'center',

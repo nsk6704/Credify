@@ -5,6 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppProvider, useApp } from './context/AppContext';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { MainNavigator } from './navigation/MainNavigator';
+import { ErrorBoundary } from './components';
 import { FontSize, FontWeight } from './constants/theme';
 
 function AppContent() {
@@ -45,11 +46,13 @@ function ThemedApp() {
 
 export default function App() {
     return (
-        <SafeAreaProvider>
-            <AppProvider>
-                <ThemedApp />
-            </AppProvider>
-        </SafeAreaProvider>
+        <ErrorBoundary>
+            <SafeAreaProvider>
+                <AppProvider>
+                    <ThemedApp />
+                </AppProvider>
+            </SafeAreaProvider>
+        </ErrorBoundary>
     );
 }
 

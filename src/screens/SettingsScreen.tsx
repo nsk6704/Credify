@@ -9,14 +9,21 @@ import {
     TextInput,
     Modal,
     Alert,
+    Share,
+    Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import * as FileSystem from 'expo-file-system';
+import { StorageAccessFramework } from 'expo-file-system/legacy';
+import * as DocumentPicker from 'expo-document-picker';
+import * as Sharing from 'expo-sharing';
 import { Spacing, FontSize, FontWeight, Currency, BorderRadius } from '../constants/theme';
 import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
 import { Button, Card } from '../components';
 import { AppStyle } from '../types';
+import * as Database from '../lib/database';
 
 interface SettingsScreenProps {
     onClose: () => void;
@@ -29,7 +36,13 @@ export function SettingsScreen({ onClose }: SettingsScreenProps) {
 
     const [showBudgetModal, setShowBudgetModal] = useState(false);
     const [budgetAmount, setBudgetAmount] = useState(financial.monthlyBudget.toString());
+    const [showWaterModal, setShowWaterModal] = useState(false);
+    const [waterGoal, setWaterGoal] = useState(health.dailyWaterGoal.toString());
+    const [showMeditationModal, setShowMeditationModal] = useState(false);
+    const [meditationGoal, setMeditationGoal] = useState(mindfulness.meditationGoal.toString());
     const [showStreakInfoModal, setShowStreakInfoModal] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
+    const [isImporting, setIsImporting] = useState(false);
 
     const handleSaveBudget = () => {
         const budget = parseFloat(budgetAmount);
@@ -42,6 +55,32 @@ export function SettingsScreen({ onClose }: SettingsScreenProps) {
             },
         });
         setShowBudgetModal(false);
+    };
+
+    const handleSaveWaterGoal = () => {
+        const goal = parseInt(waterGoal);
+        if (isNaN(goal) || goal < 1) return;
+
+        dispatch({
+            type: 'LOAD_STATE',
+            payload: {
+                health: { ...health, dailyWaterGoal: goal },
+            },
+        });
+        setShowWaterModal(false);
+    };
+
+    const handleSaveMeditationGoal = () => {
+        const goal = parseInt(meditationGoal);
+        if (isNaN(goal) || goal < 1) return;
+
+        dispatch({
+            type: 'LOAD_STATE',
+            payload: {
+                mindfulness: { ...mindfulness, meditationGoal: goal },
+            },
+        });
+        setShowMeditationModal(false);
     };
 
     const handleStreakModeChange = (mode: 'all' | 'any') => {
@@ -77,6 +116,108 @@ export function SettingsScreen({ onClose }: SettingsScreenProps) {
                     onPress: async () => {
                         await resetData();
                         onClose();
+                    },
+                },
+            ]
+        );
+    };
+
+    const handleExportData = async () => {
+        try {
+            setIsExporting(true);
+            const jsonData = await Database.exportAllData();
+            const fileName = `credify-backup-${new Date().toISOString().split('T')[0]}.csv`;
+            // Use documentDirectory if available, otherwise fallback to cacheDirectory
+
+                        let documentDir = (FileSystem as any).documentDirectory || (FileSystem as any).cacheDirectory;
+                        // On Android 10+ (API 29+), use StorageAccessFramework for user-selected export location
+                        if (!documentDir && Platform.OS === 'android' && StorageAccessFramework) {
+                            try {
+                                const permissions = await StorageAccessFramework.requestDirectoryPermissionsAsync();
+                                if (!permissions.granted) {
+                                    setIsExporting(false);
+                                    Alert.alert('Export Failed', 'Storage permission denied. Please allow access to export your backup.');
+                                    return;
+                                }
+                                documentDir = permissions.directoryUri;
+                                const fileUri = await StorageAccessFramework.createFileAsync(
+                                    documentDir,
+                                    fileName,
+                                    'text/csv'
+                                );
+                                await StorageAccessFramework.writeAsStringAsync(fileUri, jsonData);
+                                setIsExporting(false);
+                                Alert.alert('Export Complete', 'Backup exported to your selected folder.');
+                                return;
+                            } catch (err) {
+                                setIsExporting(false);
+                                Alert.alert('Export Failed', 'Could not export backup. Please try again.');
+                                return;
+                            }
+                        }
+                        if (!documentDir) {
+                            setIsExporting(false);
+                            Alert.alert(
+                              'Export Failed',
+                              'No writable directory is available on this device. Please check your storage settings or try again on a different device.'
+                            );
+                            return;
+                        }
+                        const filePath = `${documentDir}${fileName}`;
+                        await FileSystem.writeAsStringAsync(filePath, jsonData);
+            
+            if (await Sharing.isAvailableAsync()) {
+                await Sharing.shareAsync(filePath, {
+                    mimeType: 'text/csv',
+                    dialogTitle: 'Export Credify Backup',
+                });
+            } else {
+                Alert.alert('Export Complete', `Backup saved to ${fileName}`);
+            }
+        } catch (error) {
+            console.error('Export failed:', error);
+            Alert.alert('Export Failed', 'Could not export your data. Please try again.');
+        } finally {
+            setIsExporting(false);
+        }
+    };
+
+    const handleImportData = async () => {
+        Alert.alert(
+            'Import Data',
+            'This will replace ALL your current data with the backup. Your existing data will be lost. Continue?',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Import',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            setIsImporting(true);
+                            const result = await DocumentPicker.getDocumentAsync({
+                                type: 'application/json',
+                                copyToCacheDirectory: true,
+                            });
+
+                            if (result.canceled || !result.assets?.[0]) {
+                                return;
+                            }
+
+                            const fileUri = result.assets[0].uri;
+                            const jsonData = await FileSystem.readAsStringAsync(fileUri);
+                            
+                            await Database.importData(jsonData);
+                            Alert.alert(
+                                'Import Successful',
+                                'Your data has been restored. Please restart the app to see all changes.',
+                                [{ text: 'OK', onPress: onClose }]
+                            );
+                        } catch (error) {
+                            console.error('Import failed:', error);
+                            Alert.alert('Import Failed', 'Could not import the backup file. Make sure it\'s a valid Credify backup.');
+                        } finally {
+                            setIsImporting(false);
+                        }
                     },
                 },
             ]
@@ -285,7 +426,10 @@ export function SettingsScreen({ onClose }: SettingsScreenProps) {
                         <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
                     </TouchableOpacity>
 
-                    <View style={[styles.goalItem, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: styleConfig.borderRadius.md }]}>
+                    <TouchableOpacity
+                        style={[styles.goalItem, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: styleConfig.borderRadius.md }]}
+                        onPress={() => setShowWaterModal(true)}
+                    >
                         <View style={[styles.goalIcon, { backgroundColor: colors.info + '20' }]}>
                             <Ionicons name="water" size={20} color={colors.info} />
                         </View>
@@ -293,9 +437,13 @@ export function SettingsScreen({ onClose }: SettingsScreenProps) {
                             <Text style={[styles.goalLabel, { color: colors.textPrimary }]}>Daily Water</Text>
                             <Text style={[styles.goalValue, { color: colors.info }]}>{health.dailyWaterGoal} glasses</Text>
                         </View>
-                    </View>
+                        <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+                    </TouchableOpacity>
 
-                    <View style={[styles.goalItem, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: styleConfig.borderRadius.md }]}>
+                    <TouchableOpacity
+                        style={[styles.goalItem, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: styleConfig.borderRadius.md }]}
+                        onPress={() => setShowMeditationModal(true)}
+                    >
                         <View style={[styles.goalIcon, { backgroundColor: colors.mindfulness + '20' }]}>
                             <Ionicons name="leaf" size={20} color={colors.mindfulness} />
                         </View>
@@ -303,7 +451,51 @@ export function SettingsScreen({ onClose }: SettingsScreenProps) {
                             <Text style={[styles.goalLabel, { color: colors.textPrimary }]}>Meditation Goal</Text>
                             <Text style={[styles.goalValue, { color: colors.mindfulness }]}>{mindfulness.meditationGoal} min/day</Text>
                         </View>
-                    </View>
+                        <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+                    </TouchableOpacity>
+                </View>
+
+                {/* Data Management */}
+                <View style={styles.section}>
+                    <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Data Management</Text>
+                    
+                    <TouchableOpacity
+                        style={[styles.goalItem, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: styleConfig.borderRadius.md }]}
+                        onPress={handleExportData}
+                        disabled={isExporting}
+                    >
+                        <View style={[styles.goalIcon, { backgroundColor: colors.success + '20' }]}>
+                            <Ionicons name="download-outline" size={20} color={colors.success} />
+                        </View>
+                        <View style={styles.goalInfo}>
+                            <Text style={[styles.goalLabel, { color: colors.textPrimary }]}>
+                                {isExporting ? 'Exporting...' : 'Export Data'}
+                            </Text>
+                            <Text style={[styles.goalValue, { color: colors.textSecondary }]}>
+                                Create a backup of all your data
+                            </Text>
+                        </View>
+                        <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[styles.goalItem, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: styleConfig.borderRadius.md }]}
+                        onPress={handleImportData}
+                        disabled={isImporting}
+                    >
+                        <View style={[styles.goalIcon, { backgroundColor: colors.info + '20' }]}>
+                            <Ionicons name="cloud-upload-outline" size={20} color={colors.info} />
+                        </View>
+                        <View style={styles.goalInfo}>
+                            <Text style={[styles.goalLabel, { color: colors.textPrimary }]}>
+                                {isImporting ? 'Importing...' : 'Import Data'}
+                            </Text>
+                            <Text style={[styles.goalValue, { color: colors.textSecondary }]}>
+                                Restore from a backup file
+                            </Text>
+                        </View>
+                        <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+                    </TouchableOpacity>
                 </View>
 
                 {/* Danger Zone */}
@@ -327,23 +519,32 @@ export function SettingsScreen({ onClose }: SettingsScreenProps) {
                 transparent
                 onRequestClose={() => setShowBudgetModal(false)}
             >
-                <View style={[styles.modalOverlay, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
+                <View style={styles.modalOverlay}>
                     <View style={[styles.modalContent, { backgroundColor: colors.surface, borderRadius: styleConfig.borderRadius.lg }]}>
-                        <View style={styles.modalHeader}>
-                            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Set Monthly Budget</Text>
-                            <TouchableOpacity onPress={() => setShowBudgetModal(false)}>
-                                <Text style={[styles.modalClose, { color: colors.textMuted }]}>✕</Text>
-                            </TouchableOpacity>
+                        <TouchableOpacity 
+                            style={styles.modalCloseButton} 
+                            onPress={() => setShowBudgetModal(false)}
+                        >
+                            <Ionicons name="close" size={24} color={colors.textMuted} />
+                        </TouchableOpacity>
+
+                        <View style={[styles.modalIconContainer, { backgroundColor: colors.financial + '20' }]}>
+                            <Ionicons name="wallet" size={32} color={colors.financial} />
                         </View>
 
-                        <View style={[styles.budgetInput, { backgroundColor: colors.surfaceLight, borderRadius: styleConfig.borderRadius.md }]}>
-                            <Text style={[styles.currencySymbol, { color: colors.textSecondary }]}>₹</Text>
+                        <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Monthly Budget</Text>
+                        <Text style={[styles.modalDescription, { color: colors.textSecondary }]}>
+                            Set your monthly spending limit to track your finances
+                        </Text>
+
+                        <View style={[styles.inputContainer, { backgroundColor: colors.surfaceLight, borderRadius: styleConfig.borderRadius.md }]}>
+                            <Text style={[styles.inputPrefix, { color: colors.financial }]}>₹</Text>
                             <TextInput
-                                style={[styles.budgetField, { color: colors.textPrimary }]}
+                                style={[styles.inputField, { color: colors.textPrimary }]}
                                 value={budgetAmount}
                                 onChangeText={setBudgetAmount}
                                 keyboardType="decimal-pad"
-                                placeholder="0"
+                                placeholder="5000"
                                 placeholderTextColor={colors.textMuted}
                             />
                         </View>
@@ -357,6 +558,98 @@ export function SettingsScreen({ onClose }: SettingsScreenProps) {
                 </View>
             </Modal>
 
+            {/* Water Goal Modal */}
+            <Modal
+                visible={showWaterModal}
+                animationType="slide"
+                transparent
+                onRequestClose={() => setShowWaterModal(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={[styles.modalContent, { backgroundColor: colors.surface, borderRadius: styleConfig.borderRadius.lg }]}>
+                        <TouchableOpacity 
+                            style={styles.modalCloseButton} 
+                            onPress={() => setShowWaterModal(false)}
+                        >
+                            <Ionicons name="close" size={24} color={colors.textMuted} />
+                        </TouchableOpacity>
+
+                        <View style={[styles.modalIconContainer, { backgroundColor: colors.info + '20' }]}>
+                            <Ionicons name="water" size={32} color={colors.info} />
+                        </View>
+
+                        <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Daily Water Goal</Text>
+                        <Text style={[styles.modalDescription, { color: colors.textSecondary }]}>
+                            How many glasses of water do you want to drink daily?
+                        </Text>
+
+                        <View style={[styles.inputContainer, { backgroundColor: colors.surfaceLight, borderRadius: styleConfig.borderRadius.md }]}>
+                            <TextInput
+                                style={[styles.inputField, styles.inputFieldCentered, { color: colors.textPrimary }]}
+                                value={waterGoal}
+                                onChangeText={setWaterGoal}
+                                keyboardType="number-pad"
+                                placeholder="8"
+                                placeholderTextColor={colors.textMuted}
+                            />
+                            <Text style={[styles.inputSuffix, { color: colors.textSecondary }]}>glasses</Text>
+                        </View>
+
+                        <Button
+                            title="Save Goal"
+                            onPress={handleSaveWaterGoal}
+                            color={colors.info}
+                        />
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Meditation Goal Modal */}
+            <Modal
+                visible={showMeditationModal}
+                animationType="slide"
+                transparent
+                onRequestClose={() => setShowMeditationModal(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={[styles.modalContent, { backgroundColor: colors.surface, borderRadius: styleConfig.borderRadius.lg }]}>
+                        <TouchableOpacity 
+                            style={styles.modalCloseButton} 
+                            onPress={() => setShowMeditationModal(false)}
+                        >
+                            <Ionicons name="close" size={24} color={colors.textMuted} />
+                        </TouchableOpacity>
+
+                        <View style={[styles.modalIconContainer, { backgroundColor: colors.mindfulness + '20' }]}>
+                            <Ionicons name="leaf" size={32} color={colors.mindfulness} />
+                        </View>
+
+                        <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Daily Meditation</Text>
+                        <Text style={[styles.modalDescription, { color: colors.textSecondary }]}>
+                            Set your daily meditation target in minutes
+                        </Text>
+
+                        <View style={[styles.inputContainer, { backgroundColor: colors.surfaceLight, borderRadius: styleConfig.borderRadius.md }]}>
+                            <TextInput
+                                style={[styles.inputField, styles.inputFieldCentered, { color: colors.textPrimary }]}
+                                value={meditationGoal}
+                                onChangeText={setMeditationGoal}
+                                keyboardType="number-pad"
+                                placeholder="10"
+                                placeholderTextColor={colors.textMuted}
+                            />
+                            <Text style={[styles.inputSuffix, { color: colors.textSecondary }]}>min/day</Text>
+                        </View>
+
+                        <Button
+                            title="Save Goal"
+                            onPress={handleSaveMeditationGoal}
+                            color={colors.mindfulness}
+                        />
+                    </View>
+                </View>
+            </Modal>
+
             {/* Streak Info Modal */}
             <Modal
                 visible={showStreakInfoModal}
@@ -364,37 +657,46 @@ export function SettingsScreen({ onClose }: SettingsScreenProps) {
                 transparent
                 onRequestClose={() => setShowStreakInfoModal(false)}
             >
-                <View style={[styles.modalOverlay, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
+                <View style={styles.modalOverlay}>
                     <View style={[styles.modalContent, { backgroundColor: colors.surface, borderRadius: styleConfig.borderRadius.lg }]}>
-                        <View style={styles.modalHeader}>
-                            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>How Streaks Work</Text>
-                            <TouchableOpacity onPress={() => setShowStreakInfoModal(false)}>
-                                <Text style={[styles.modalClose, { color: colors.textMuted }]}>✕</Text>
-                            </TouchableOpacity>
+                        <TouchableOpacity 
+                            style={styles.modalCloseButton} 
+                            onPress={() => setShowStreakInfoModal(false)}
+                        >
+                            <Ionicons name="close" size={24} color={colors.textMuted} />
+                        </TouchableOpacity>
+
+                        <View style={[styles.modalIconContainer, { backgroundColor: colors.streak + '20' }]}>
+                            <Ionicons name="flame" size={32} color={colors.streak} />
                         </View>
 
-                        <View style={styles.infoSection}>
-                            <Text style={[styles.infoTitle, { color: colors.textPrimary }]}>
-                                Current: {settings?.streakMode === 'all' ? 'Challenge Mode' : 'Easy Mode'}
-                            </Text>
+                        <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>How Streaks Work</Text>
+                        <Text style={[styles.modalDescription, { color: colors.textSecondary }]}>
+                            {settings?.streakMode === 'all' ? 'Challenge Mode' : 'Easy Mode'} is active
+                        </Text>
+
+                        <View style={[styles.infoCard, { backgroundColor: colors.surfaceLight, borderRadius: styleConfig.borderRadius.md }]}>
                             <Text style={[styles.infoText, { color: colors.textSecondary }]}>{streakModeDescription}</Text>
                         </View>
 
-                        <View style={styles.infoSection}>
-                            <Text style={[styles.infoTitle, { color: colors.textPrimary }]}>Categories</Text>
-                            <View style={styles.categoryList}>
-                                <View style={styles.categoryItem}>
-                                    <View style={[styles.categoryDot, { backgroundColor: colors.financial }]} />
-                                    <Text style={[styles.categoryText, { color: colors.textSecondary }]}>Finance: Log any expense</Text>
+                        <View style={styles.categoryList}>
+                            <View style={styles.categoryItem}>
+                                <View style={[styles.categoryIcon, { backgroundColor: colors.financial + '20' }]}>
+                                    <Ionicons name="wallet" size={16} color={colors.financial} />
                                 </View>
-                                <View style={styles.categoryItem}>
-                                    <View style={[styles.categoryDot, { backgroundColor: colors.health }]} />
-                                    <Text style={[styles.categoryText, { color: colors.textSecondary }]}>Health: Log workout or water</Text>
+                                <Text style={[styles.categoryText, { color: colors.textSecondary }]}>Finance: Log any expense</Text>
+                            </View>
+                            <View style={styles.categoryItem}>
+                                <View style={[styles.categoryIcon, { backgroundColor: colors.health + '20' }]}>
+                                    <Ionicons name="fitness" size={16} color={colors.health} />
                                 </View>
-                                <View style={styles.categoryItem}>
-                                    <View style={[styles.categoryDot, { backgroundColor: colors.mindfulness }]} />
-                                    <Text style={[styles.categoryText, { color: colors.textSecondary }]}>Mind: Meditate, journal, or mood</Text>
+                                <Text style={[styles.categoryText, { color: colors.textSecondary }]}>Health: Log workout or water</Text>
+                            </View>
+                            <View style={styles.categoryItem}>
+                                <View style={[styles.categoryIcon, { backgroundColor: colors.mindfulness + '20' }]}>
+                                    <Ionicons name="leaf" size={16} color={colors.mindfulness} />
                                 </View>
+                                <Text style={[styles.categoryText, { color: colors.textSecondary }]}>Mind: Meditate, journal, or mood</Text>
                             </View>
                         </View>
 
@@ -658,67 +960,96 @@ const styles = StyleSheet.create({
     modalOverlay: {
         flex: 1,
         justifyContent: 'flex-end',
+        backgroundColor: 'rgba(0,0,0,0.5)',
     },
     modalContent: {
-        padding: Spacing.lg,
-    },
-    modalHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
+        padding: Spacing.xl,
+        paddingTop: Spacing.lg,
         alignItems: 'center',
-        marginBottom: Spacing.lg,
+    },
+    modalCloseButton: {
+        position: 'absolute',
+        top: Spacing.md,
+        right: Spacing.md,
+        padding: Spacing.xs,
+        zIndex: 1,
+    },
+    modalIconContainer: {
+        width: 72,
+        height: 72,
+        borderRadius: 36,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: Spacing.md,
+        marginTop: Spacing.sm,
     },
     modalTitle: {
-        fontSize: FontSize.lg,
-        fontWeight: FontWeight.bold,
-    },
-    modalClose: {
         fontSize: FontSize.xl,
-        padding: Spacing.sm,
+        fontWeight: FontWeight.bold,
+        marginBottom: Spacing.xs,
+        textAlign: 'center',
     },
-    budgetInput: {
+    modalDescription: {
+        fontSize: FontSize.sm,
+        textAlign: 'center',
+        marginBottom: Spacing.lg,
+        lineHeight: 20,
+    },
+    inputContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: Spacing.md,
+        paddingHorizontal: Spacing.lg,
+        paddingVertical: Spacing.md,
         marginBottom: Spacing.lg,
+        width: '100%',
     },
-    currencySymbol: {
+    inputPrefix: {
         fontSize: FontSize.xxl,
         fontWeight: FontWeight.bold,
+        marginRight: Spacing.sm,
     },
-    budgetField: {
+    inputField: {
         flex: 1,
         fontSize: FontSize.xxl,
         fontWeight: FontWeight.bold,
-        paddingVertical: Spacing.md,
+    },
+    inputFieldCentered: {
+        textAlign: 'center',
+    },
+    inputSuffix: {
+        fontSize: FontSize.md,
+        fontWeight: FontWeight.medium,
         marginLeft: Spacing.sm,
     },
-    infoSection: {
+    infoCard: {
+        padding: Spacing.md,
         marginBottom: Spacing.lg,
-    },
-    infoTitle: {
-        fontSize: FontSize.sm,
-        fontWeight: FontWeight.semibold,
-        marginBottom: Spacing.sm,
+        width: '100%',
     },
     infoText: {
         fontSize: FontSize.sm,
         lineHeight: 20,
+        textAlign: 'center',
     },
     categoryList: {
+        width: '100%',
         gap: Spacing.sm,
+        marginBottom: Spacing.lg,
     },
     categoryItem: {
         flexDirection: 'row',
         alignItems: 'center',
     },
-    categoryDot: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
+    categoryIcon: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        alignItems: 'center',
+        justifyContent: 'center',
         marginRight: Spacing.sm,
     },
     categoryText: {
         fontSize: FontSize.sm,
+        flex: 1,
     },
 });

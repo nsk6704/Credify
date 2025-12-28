@@ -72,6 +72,7 @@ interface SectionCardProps {
     onPress?: () => void;
     children?: ReactNode;
     progress?: number;
+    disabled?: boolean;
 }
 
 export function SectionCard({
@@ -82,18 +83,23 @@ export function SectionCard({
     onPress,
     children,
     progress,
+    disabled,
 }: SectionCardProps) {
     const { colors, styleConfig } = useTheme();
+    
+    const displayColor = disabled ? colors.textMuted : color;
+    const isDisabled = disabled || progress === undefined || progress < 0;
+    const displayProgress = isDisabled ? 0 : Math.min(progress * 100, 100);
     
     return (
         <Card onPress={onPress} style={styles.sectionCard}>
             <View style={styles.sectionHeader}>
-                <View style={[styles.iconContainer, { backgroundColor: color + '20', borderRadius: styleConfig.borderRadius.md }]}>
-                    {iconName && <Ionicons name={iconName} size={24} color={color} />}
+                <View style={[styles.iconContainer, { backgroundColor: displayColor + '20', borderRadius: styleConfig.borderRadius.md }]}>
+                    {iconName && <Ionicons name={iconName} size={24} color={displayColor} />}
                 </View>
                 <View style={styles.sectionInfo}>
-                    <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{title}</Text>
-                    {subtitle && <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>{subtitle}</Text>}
+                    <Text style={[styles.sectionTitle, { color: disabled ? colors.textMuted : colors.textPrimary }]}>{title}</Text>
+                    {subtitle && <Text style={[styles.sectionSubtitle, { color: disabled ? colors.textMuted : colors.textSecondary }]}>{subtitle}</Text>}
                 </View>
             </View>
             {progress !== undefined && (
@@ -102,11 +108,13 @@ export function SectionCard({
                         <View
                             style={[
                                 styles.progressFill,
-                                { width: `${Math.min(progress * 100, 100)}%`, backgroundColor: color },
+                                { width: `${displayProgress}%`, backgroundColor: displayColor },
                             ]}
                         />
                     </View>
-                    <Text style={[styles.progressText, { color: colors.textSecondary }]}>{Math.round(progress * 100)}%</Text>
+                    <Text style={[styles.progressText, { color: disabled ? colors.textMuted : colors.textSecondary }]}>
+                        {isDisabled ? '--' : `${Math.round(displayProgress)}%`}
+                    </Text>
                 </View>
             )}
             {children}

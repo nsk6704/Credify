@@ -411,12 +411,30 @@ export async function addMood(mood: { id: string; mood: string; notes?: string; 
 }
 
 // Daily challenges operations
-export async function getDailyChallenges(date: string) {
+export async function getDailyChallenges(date: string): Promise<DailyChallenge[]> {
     const database = await getDb();
-    return await database.getAllAsync<DailyChallenge & { completed: number }>(
+    const results = await database.getAllAsync<{
+        id: string;
+        title: string;
+        description: string;
+        xpReward: number;
+        category: 'financial' | 'health' | 'mindfulness';
+        completed: number;
+        date: string;
+    }>(
         'SELECT * FROM daily_challenges WHERE date = ?',
         date
     );
+    // Convert SQLite integer to boolean for completed field
+    return results.map(r => ({
+        id: r.id,
+        title: r.title,
+        description: r.description,
+        xpReward: r.xpReward,
+        category: r.category,
+        completed: r.completed === 1,
+        date: r.date,
+    }));
 }
 
 export async function saveDailyChallenges(challenges: DailyChallenge[]) {
@@ -520,6 +538,126 @@ export async function resetAllData(): Promise<void> {
         DELETE FROM settings;
         DELETE FROM daily_challenges;
     `);
+}
+
+// Export all data as JSON string for backup
+export async function exportAllData(): Promise<string> {
+    const state = await loadAppState();
+    const exportData = {
+        version: '1.0.0',
+        exportedAt: new Date().toISOString(),
+        data: state,
+    };
+    return JSON.stringify(exportData, null, 2);
+}
+
+// Import data from JSON backup
+export async function importData(jsonString: string): Promise<boolean> {
+    try {
+        const importDataObj = JSON.parse(jsonString);
+        
+        // Validate structure
+        if (!importDataObj.data || !importDataObj.version) {
+            throw new Error('Invalid backup file format');
+        }
+
+        const { data } = importDataObj;
+        
+        // Clear existing data first
+        await resetAllData();
+        
+        // Import user
+        if (data.user) {
+            await saveUser(data.user);
+        }
+        
+        // Import expenses
+        if (data.financial?.expenses) {
+            for (const expense of data.financial.expenses) {
+                await addExpense(expense);
+            }
+        }
+        
+        // Import budgets
+        if (data.financial?.budgets) {
+            for (const budget of data.financial.budgets) {
+                await saveBudget(budget);
+            }
+        }
+        
+        // Import financial goals
+        if (data.financial?.goals) {
+            for (const goal of data.financial.goals) {
+                await saveFinancialGoal(goal);
+            }
+        }
+        
+        // Import workouts
+        if (data.health?.workouts) {
+            for (const workout of data.health.workouts) {
+                await addWorkout(workout);
+            }
+        }
+        
+        // Import water logs
+        if (data.health?.waterLogs) {
+            for (const log of data.health.waterLogs) {
+                await logWater(log);
+            }
+        }
+        
+        // Import meals
+        if (data.health?.meals) {
+            for (const meal of data.health.meals) {
+                await addMeal(meal);
+            }
+        }
+        
+        // Import meditations
+        if (data.mindfulness?.meditations) {
+            for (const meditation of data.mindfulness.meditations) {
+                await addMeditation(meditation);
+            }
+        }
+        
+        // Import journals
+        if (data.mindfulness?.journals) {
+            for (const journal of data.mindfulness.journals) {
+                await addJournal(journal);
+            }
+        }
+        
+        // Import gratitude logs
+        if (data.mindfulness?.gratitudeLogs) {
+            for (const log of data.mindfulness.gratitudeLogs) {
+                await addGratitude(log);
+            }
+        }
+        
+        // Import moods
+        if (data.mindfulness?.moods) {
+            for (const mood of data.mindfulness.moods) {
+                await addMood(mood);
+            }
+        }
+        
+        // Import settings
+        if (data.settings) {
+            for (const [key, value] of Object.entries(data.settings)) {
+                await saveSetting(key, String(value));
+            }
+        }
+        
+        // Import daily challenges
+        if (data.dailyChallenges) {
+            await saveDailyChallenges(data.dailyChallenges);
+        }
+        
+        return true;
+    } catch (error) {
+        console.error('Import failed:', error);
+        throw error;
+    }
 }
 
 export { db };
