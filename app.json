@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Credify",
-    "slug": "Credify",
+    "slug": "credify",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -31,8 +31,9 @@
     },
     "extra": {
       "eas": {
-        "projectId": "your-project-id"
+        "projectId": "0c079cdf-c9b0-4558-b475-090da1bb1e0a"
       }
-    }
+    },
+    "owner": "nsk6704"
   }
 }
