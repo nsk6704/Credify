@@ -4,11 +4,11 @@
     "slug": "credify",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/main-icon.png",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/main-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#0A0A0F"
     },
@@ -19,7 +19,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/main-icon.png",
         "backgroundColor": "#0A0A0F"
       },
       "edgeToEdgeEnabled": true,
@@ -27,7 +27,7 @@
       "versionCode": 1
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/main-icon.png"
     },
     "extra": {
       "eas": {

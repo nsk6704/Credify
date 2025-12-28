@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, ActivityIndicator, StyleSheet, Text, StatusBar } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -6,26 +6,23 @@ import { AppProvider, useApp } from './context/AppContext';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { MainNavigator } from './navigation/MainNavigator';
 import { ErrorBoundary } from './components';
+import { Splash } from './components';
 import { FontSize, FontWeight } from './constants/theme';
 
 function AppContent() {
     const { state } = useApp();
-    const { colors, isDark } = useTheme();
+    const [showSplash, setShowSplash] = useState(true);
+
+    useEffect(() => {
+        if (!state.isLoading) {
+            const timer = setTimeout(() => setShowSplash(false), 2000);
+            return () => clearTimeout(timer);
+        }
+    }, [state.isLoading]);
 
     // Loading screen
-    if (state.isLoading) {
-        return (
-            <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-                <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
-                <View style={styles.logoWrapper}>
-                    <View style={[styles.logoBg, { backgroundColor: colors.primary }]}>
-                        <Text style={[styles.loadingLogo, { color: colors.textPrimary }]}>C</Text>
-                    </View>
-                </View>
-                <Text style={[styles.loadingTitle, { color: colors.textPrimary }]}>Credify</Text>
-                <ActivityIndicator color={colors.primary} size="large" style={styles.spinner} />
-            </View>
-        );
+    if (state.isLoading || showSplash) {
+        return <Splash loadingText="Loading your experience..."  />;
     }
 
     // Main app
