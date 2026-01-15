@@ -14,10 +14,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Spacing, FontSize, FontWeight, BorderRadius } from '../constants/theme';
-import { ACHIEVEMENTS } from '../constants/gamification';
 import { useApp, calculateLevel } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
-import { Card, AchievementBadge } from '../components';
+import { Card } from '../components';
 import { format } from 'date-fns';
 import { SettingsScreen } from './SettingsScreen';
 
@@ -51,53 +50,6 @@ export function ProfileScreen() {
     const totalWorkouts = health.workouts.length;
     const totalMeditations = mindfulness.meditations.length;
     const totalJournals = mindfulness.journals.length;
-
-    // Achievements
-    const unlockedAchievements = user?.achievements || [];
-    const allAchievements = Object.values(ACHIEVEMENTS);
-
-    const getUnlockDescription = (achievementId: string): string => {
-        switch (achievementId) {
-            case 'firstExpense':
-                return 'Log your first expense to unlock this achievement.';
-            case 'budgetBoss':
-                return 'Stay under your daily budget for 7 consecutive days to unlock this achievement.';
-            case 'savingsChamp':
-                return 'Create and reach your first savings goal to unlock this achievement.';
-            case 'firstWorkout':
-                return 'Complete your first workout to unlock this achievement.';
-            case 'hydrationHero':
-                return 'Log water intake for 7 consecutive days to unlock this achievement.';
-            case 'fitnessFreak':
-                return 'Complete workouts for 30 consecutive days to unlock this achievement.';
-            case 'firstMeditation':
-                return 'Complete your first meditation session to unlock this achievement.';
-            case 'journalJourney':
-                return 'Write 10 journal entries to unlock this achievement.';
-            case 'zenMaster':
-                return 'Complete 100 meditation sessions to unlock this achievement.';
-            case 'weekStreak':
-                return 'Maintain an overall streak of 7 days to unlock this achievement.';
-            case 'monthStreak':
-                return 'Maintain an overall streak of 30 days to unlock this achievement.';
-            case 'levelUp5':
-                return 'Reach level 5 to unlock this achievement.';
-            case 'levelUp10':
-                return 'Reach level 10 to unlock this achievement.';
-            default:
-                return 'Complete the requirements to unlock this achievement.';
-        }
-    };
-
-    const handleAchievementPress = (achievement: any) => {
-        if (!unlockedAchievements.includes(achievement.id)) {
-            Alert.alert(
-                achievement.title,
-                getUnlockDescription(achievement.id),
-                [{ text: 'OK' }]
-            );
-        }
-    };
 
     const handleSaveName = () => {
         if (!newName.trim()) return;
@@ -199,29 +151,6 @@ export function ProfileScreen() {
                         <Text style={[styles.statValue, { color: colors.primary }]}>{totalJournals}</Text>
                         <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Journals</Text>
                     </Card>
-                </View>
-
-                {/* Achievements */}
-                <View style={styles.section}>
-                    <View style={styles.sectionHeader}>
-                        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Achievements</Text>
-                        <Text style={[styles.achievementCount, { color: colors.textSecondary }]}>
-                            {unlockedAchievements.length}/{allAchievements.length}
-                        </Text>
-                    </View>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                        <View style={styles.achievementsRow}>
-                            {allAchievements.map(achievement => (
-                                <AchievementBadge
-                                    key={achievement.id}
-                                    icon={achievement.icon}
-                                    title={achievement.title}
-                                    unlocked={unlockedAchievements.includes(achievement.id)}
-                                    onPress={() => handleAchievementPress(achievement)}
-                                />
-                            ))}
-                        </View>
-                    </ScrollView>
                 </View>
 
                 <View style={styles.bottomPadding} />
@@ -441,13 +370,6 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: FontSize.md,
         fontWeight: FontWeight.semibold,
-    },
-    achievementCount: {
-        fontSize: FontSize.sm,
-    },
-    achievementsRow: {
-        flexDirection: 'row',
-        paddingVertical: Spacing.sm,
     },
     bottomPadding: {
         height: 100,

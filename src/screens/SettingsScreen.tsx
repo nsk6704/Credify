@@ -98,7 +98,7 @@ export function SettingsScreen({ onClose }: SettingsScreenProps) {
     const handleResetData = () => {
         Alert.alert(
             'Reset All Data',
-            'This will delete all your progress, including XP, achievements, and logged activities. This cannot be undone.',
+            'This will delete all your progress, including XP and logged activities. This cannot be undone.',
             [
                 { text: 'Cancel', style: 'cancel' },
                 {

@@ -24,7 +24,7 @@ export function HomeScreen() {
     const { state } = useApp();
     const { colors, styleConfig, isDark } = useTheme();
     const navigation = useNavigation<NavigationProp>();
-    const { user, financial, health, mindfulness, dailyChallenges } = state;
+    const { user, financial, health, mindfulness } = state;
 
     const levelInfo = calculateLevel(user?.totalXP || 0);
     const today = format(new Date(), 'EEEE, MMMM d');
@@ -45,8 +45,6 @@ export function HomeScreen() {
 
     const todayMeditations = mindfulness.meditations.filter(m => m.date === todayStr);
     const todayMeditationMins = todayMeditations.reduce((sum, m) => sum + m.duration, 0);
-
-    const completedChallenges = dailyChallenges.filter(c => c.completed).length;
 
     // Calculate progress: shows how much spent of budget (0% = nothing spent, 100% = budget fully used)
     const financialProgress = financial.monthlyBudget > 0 
@@ -113,72 +111,6 @@ export function HomeScreen() {
                             </View>
                         </View>
                     </View>
-                </View>
-
-                {/* Daily Challenges */}
-                <View style={styles.section}>
-                    <View style={styles.sectionHeader}>
-                        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Daily Challenges</Text>
-                        <Text style={[styles.sectionBadge, { color: colors.textSecondary }]}>{completedChallenges}/{dailyChallenges.length}</Text>
-                    </View>
-                    {dailyChallenges.length > 0 ? (
-                        dailyChallenges.slice(0, 3).map(challenge => {
-                            const categoryColors: Record<string, string> = {
-                                financial: colors.financial,
-                                health: colors.health,
-                                mindfulness: colors.mindfulness,
-                            };
-                            const categoryIcons: Record<string, keyof typeof Ionicons.glyphMap> = {
-                                financial: 'wallet-outline',
-                                health: 'fitness-outline',
-                                mindfulness: 'leaf-outline',
-                            };
-                            const categoryColor = categoryColors[challenge.category] || colors.primary;
-                            const categoryIcon = categoryIcons[challenge.category] || 'star-outline';
-                            
-                            return (
-                                <View 
-                                    key={challenge.id} 
-                                    style={[
-                                        styles.challengeItem, 
-                                        { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: styleConfig.borderRadius.md },
-                                        challenge.completed && { opacity: 0.7 }
-                                    ]}
-                                >
-                                    <View style={[
-                                        styles.challengeCheck, 
-                                        { backgroundColor: categoryColor + '20', borderColor: categoryColor },
-                                        challenge.completed && { backgroundColor: colors.success, borderColor: colors.success }
-                                    ]}>
-                                        {challenge.completed ? (
-                                            <Ionicons name="checkmark" size={16} color="#FFFFFF" />
-                                        ) : (
-                                            <Ionicons name={categoryIcon} size={16} color={categoryColor} />
-                                        )}
-                                    </View>
-                                    <View style={styles.challengeInfo}>
-                                        <Text style={[
-                                            styles.challengeTitle, 
-                                            { color: colors.textPrimary }, 
-                                            challenge.completed && { color: colors.textMuted, textDecorationLine: 'line-through' }
-                                        ]}>
-                                            {challenge.title}
-                                        </Text>
-                                        <Text style={[styles.challengeDesc, { color: colors.textMuted }]}>{challenge.description}</Text>
-                                    </View>
-                                    <View style={[styles.challengeXPBadge, { backgroundColor: challenge.completed ? colors.success + '20' : colors.xp + '20' }]}>
-                                        <Text style={[styles.challengeXP, { color: challenge.completed ? colors.success : colors.xp }]}>
-                                            {challenge.completed ? '✓' : '+'}{challenge.xpReward}
-                                        </Text>
-                                    </View>
-                                </View>
-                            );
-                        })
-                    ) : (
-                        <Card style={styles.emptyCard}>
-                            <Text style={[styles.emptyText, { color: colors.textMuted }]}>Loading daily challenges...</Text>
-                        </Card>
-                    )}
                 </View>
 
                 {/* Quick Actions */}
@@ -320,23 +252,10 @@ const styles = StyleSheet.create({
     section: {
         marginTop: Spacing.lg,
     },
-    sectionHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: Spacing.md,
-    },
     sectionTitle: {
         fontSize: FontSize.md,
         fontWeight: FontWeight.semibold,
         marginBottom: Spacing.md,
-    },
-    sectionBadge: {
-        fontSize: FontSize.xs,
-        fontWeight: FontWeight.semibold,
-        paddingHorizontal: Spacing.sm,
-        paddingVertical: Spacing.xs,
-        borderRadius: 999,
     },
     statsGrid: {
         flexDirection: 'row',
@@ -359,55 +278,6 @@ const styles = StyleSheet.create({
     statLabel: {
         fontSize: FontSize.xs,
         marginTop: 2,
-    },
-    challengeItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: Spacing.md,
-        marginBottom: Spacing.sm,
-        borderWidth: 1,
-    },
-    challengeCheck: {
-        width: 20,
-        height: 20,
-        borderRadius: 999,
-        borderWidth: 2,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    checkmark: {
-        color: '#FFF',
-        fontWeight: FontWeight.bold,
-        fontSize: 12,
-    },
-    challengeInfo: {
-        flex: 1,
-        marginLeft: Spacing.md,
-    },
-    challengeTitle: {
-        fontSize: FontSize.sm,
-        fontWeight: FontWeight.medium,
-    },
-    challengeDesc: {
-        fontSize: FontSize.xs,
-        marginTop: 2,
-    },
-    challengeXPBadge: {
-        paddingHorizontal: Spacing.sm,
-        paddingVertical: Spacing.xs,
-        borderRadius: 12,
-    },
-    challengeXP: {
-        fontSize: FontSize.xs,
-        fontWeight: FontWeight.bold,
-    },
-    emptyCard: {
-        alignItems: 'center',
-        padding: Spacing.lg,
-    },
-    emptyText: {
-        fontSize: FontSize.sm,
-        textAlign: 'center',
     },
     quickActions: {
         flexDirection: 'row',

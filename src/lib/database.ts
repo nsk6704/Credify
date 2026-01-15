@@ -1,5 +1,5 @@
 import * as SQLite from 'expo-sqlite';
-import { AppState, User, Streaks, FinancialState, HealthState, MindfulnessState, DailyChallenge } from '../types';
+import { AppState, User, Streaks, FinancialState, HealthState, MindfulnessState } from '../types';
 
 const DATABASE_NAME = 'credify.db';
 
@@ -17,6 +17,7 @@ export async function initDatabase(): Promise<SQLite.SQLiteDatabase> {
         try {
             db = await SQLite.openDatabaseAsync(DATABASE_NAME);
             await createTables();
+            await migrateDatabase();
             return db;
         } catch (error) {
             initPromise = null; // Reset on error to allow retry
@@ -38,6 +39,57 @@ async function getDb(): Promise<SQLite.SQLiteDatabase> {
     return db;
 }
 
+// Migrate existing database to remove achievements column
+async function migrateDatabase(): Promise<void> {
+    if (!db) throw new Error('Database not initialized');
+
+    try {
+        // Check if achievements column exists in user table
+        const tableInfo = await db.getAllAsync<{ name: string }>('PRAGMA table_info(user)');
+        const hasAchievements = tableInfo.some(col => col.name === 'achievements');
+
+        if (hasAchievements) {
+            console.log('Migrating database: removing achievements column...');
+            
+            // Create new user table without achievements
+            await db.execAsync(`
+                CREATE TABLE IF NOT EXISTS user_new (
+                    id TEXT PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    createdAt TEXT NOT NULL,
+                    totalXP INTEGER DEFAULT 0,
+                    level INTEGER DEFAULT 1,
+                    streaks TEXT NOT NULL
+                );
+            `);
+
+            // Copy data from old table to new table
+            await db.execAsync(`
+                INSERT INTO user_new (id, name, createdAt, totalXP, level, streaks)
+                SELECT id, name, createdAt, totalXP, level, streaks FROM user;
+            `);
+
+            // Drop old table and rename new table
+            await db.execAsync(`
+                DROP TABLE user;
+                ALTER TABLE user_new RENAME TO user;
+            `);
+
+            console.log('Database migration completed successfully');
+        }
+
+        // Check if daily_challenges table exists and drop it
+        const tables = await db.getAllAsync<{ name: string }>('SELECT name FROM sqlite_master WHERE type="table" AND name="daily_challenges"');
+        if (tables.length > 0) {
+            console.log('Removing daily_challenges table...');
+            await db.execAsync('DROP TABLE IF EXISTS daily_challenges;');
+        }
+    } catch (error) {
+        console.error('Database migration error:', error);
+        throw error;
+    }
+}
+
 // Create all tables
 async function createTables(): Promise<void> {
     if (!db) throw new Error('Database not initialized');
@@ -50,8 +102,7 @@ async function createTables(): Promise<void> {
             createdAt TEXT NOT NULL,
             totalXP INTEGER DEFAULT 0,
             level INTEGER DEFAULT 1,
-            streaks TEXT NOT NULL,
-            achievements TEXT NOT NULL
+            streaks TEXT NOT NULL
         );
     `);
 
@@ -176,19 +227,6 @@ async function createTables(): Promise<void> {
             value TEXT NOT NULL
         );
     `);
-
-    // Daily challenges table
-    await db.execAsync(`
-        CREATE TABLE IF NOT EXISTS daily_challenges (
-            id TEXT PRIMARY KEY,
-            title TEXT NOT NULL,
-            description TEXT NOT NULL,
-            xpReward INTEGER NOT NULL,
-            category TEXT NOT NULL,
-            completed INTEGER DEFAULT 0,
-            date TEXT NOT NULL
-        );
-    `);
 }
 
 // User operations
@@ -202,7 +240,6 @@ export async function getUser(): Promise<User | null> {
         totalXP: number;
         level: number;
         streaks: string;
-        achievements: string;
     }>('SELECT * FROM user LIMIT 1');
 
     if (!result) return null;
@@ -214,7 +251,6 @@ export async function getUser(): Promise<User | null> {
         totalXP: result.totalXP,
         level: result.level,
         streaks: JSON.parse(result.streaks),
-        achievements: JSON.parse(result.achievements),
     };
 }
 
@@ -222,15 +258,14 @@ export async function saveUser(user: User): Promise<void> {
     const database = await getDb();
 
     await database.runAsync(
-        `INSERT OR REPLACE INTO user (id, name, createdAt, totalXP, level, streaks, achievements)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT OR REPLACE INTO user (id, name, createdAt, totalXP, level, streaks)
+         VALUES (?, ?, ?, ?, ?, ?)`,
         user.id,
         user.name,
         user.createdAt,
         user.totalXP,
         user.level,
-        JSON.stringify(user.streaks),
-        JSON.stringify(user.achievements)
+        JSON.stringify(user.streaks)
     );
 }
 
@@ -410,49 +445,6 @@ export async function addMood(mood: { id: string; mood: string; notes?: string; 
     );
 }
 
-// Daily challenges operations
-export async function getDailyChallenges(date: string): Promise<DailyChallenge[]> {
-    const database = await getDb();
-    const results = await database.getAllAsync<{
-        id: string;
-        title: string;
-        description: string;
-        xpReward: number;
-        category: 'financial' | 'health' | 'mindfulness';
-        completed: number;
-        date: string;
-    }>(
-        'SELECT * FROM daily_challenges WHERE date = ?',
-        date
-    );
-    // Convert SQLite integer to boolean for completed field
-    return results.map(r => ({
-        id: r.id,
-        title: r.title,
-        description: r.description,
-        xpReward: r.xpReward,
-        category: r.category,
-        completed: r.completed === 1,
-        date: r.date,
-    }));
-}
-
-export async function saveDailyChallenges(challenges: DailyChallenge[]) {
-    const database = await getDb();
-    
-    for (const challenge of challenges) {
-        await database.runAsync(
-            'INSERT OR REPLACE INTO daily_challenges (id, title, description, xpReward, category, completed, date) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            challenge.id, challenge.title, challenge.description, challenge.xpReward, challenge.category, challenge.completed ? 1 : 0, challenge.date
-        );
-    }
-}
-
-export async function completeChallenge(id: string) {
-    const database = await getDb();
-    await database.runAsync('UPDATE daily_challenges SET completed = 1 WHERE id = ?', id);
-}
-
 // Load full app state from database
 export async function loadAppState(): Promise<Partial<AppState>> {
     await getDb();
@@ -516,21 +508,6 @@ export async function loadAppState(): Promise<Partial<AppState>> {
 }
 
 // Reset all data
-// Cleanup old daily challenges to prevent database bloat
-export async function cleanupOldChallenges(daysToKeep: number = 30): Promise<number> {
-    const database = await getDb();
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
-    const cutoffDateStr = cutoffDate.toISOString().split('T')[0]; // yyyy-MM-dd format
-    
-    const result = await database.runAsync(
-        'DELETE FROM daily_challenges WHERE date < ?',
-        cutoffDateStr
-    );
-    
-    return result.changes; // Returns number of deleted rows
-}
-
 export async function resetAllData(): Promise<void> {
     const database = await getDb();
 
@@ -547,7 +524,6 @@ export async function resetAllData(): Promise<void> {
         DELETE FROM gratitude_logs;
         DELETE FROM moods;
         DELETE FROM settings;
-        DELETE FROM daily_challenges;
     `);
 }
 
@@ -657,11 +633,6 @@ export async function importData(jsonString: string): Promise<boolean> {
             for (const [key, value] of Object.entries(data.settings)) {
                 await saveSetting(key, String(value));
             }
-        }
-        
-        // Import daily challenges
-        if (data.dailyChallenges) {
-            await saveDailyChallenges(data.dailyChallenges);
         }
         
         return true;

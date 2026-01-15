@@ -6,7 +6,6 @@ export interface User {
     totalXP: number;
     level: number;
     streaks: Streaks;
-    achievements: string[]; // Achievement IDs
 }
 
 export interface Streaks {
@@ -18,26 +17,6 @@ export interface Streaks {
 }
 
 // Gamification types
-export interface Achievement {
-    id: string;
-    title: string;
-    description: string;
-    icon: string;
-    category: 'financial' | 'health' | 'mindfulness' | 'general';
-    xpReward: number;
-    unlockedAt?: string;
-}
-
-export interface DailyChallenge {
-    id: string;
-    title: string;
-    description: string;
-    xpReward: number;
-    category: 'financial' | 'health' | 'mindfulness';
-    completed: boolean;
-    date: string;
-}
-
 export interface LevelInfo {
     level: number;
     minXP: number;
@@ -171,7 +150,6 @@ export interface AppState {
     financial: FinancialState;
     health: HealthState;
     mindfulness: MindfulnessState;
-    dailyChallenges: DailyChallenge[];
     settings: AppSettings;
     isLoading: boolean;
 }
@@ -180,7 +158,6 @@ export interface AppState {
 export type AppAction =
     | { type: 'SET_USER'; payload: User }
     | { type: 'ADD_XP'; payload: number }
-    | { type: 'UNLOCK_ACHIEVEMENT'; payload: string }
     | { type: 'UPDATE_STREAK'; payload: { category: keyof Streaks; value: number } }
     | { type: 'SET_LOADING'; payload: boolean }
     // Financial actions
@@ -200,9 +177,6 @@ export type AppAction =
     | { type: 'ADD_MOOD'; payload: MoodEntry }
     // Settings actions
     | { type: 'UPDATE_SETTINGS'; payload: Partial<AppSettings> }
-    // Challenge actions
-    | { type: 'SET_DAILY_CHALLENGES'; payload: DailyChallenge[] }
-    | { type: 'COMPLETE_CHALLENGE'; payload: string }
     // Bulk actions
     | { type: 'LOAD_STATE'; payload: Partial<AppState> };
 

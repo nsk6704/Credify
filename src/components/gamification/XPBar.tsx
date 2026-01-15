@@ -95,49 +95,6 @@ export function StreakBadge({ count, label, size = 'md' }: StreakBadgeProps) {
     );
 }
 
-interface AchievementBadgeProps {
-    icon: string;
-    title: string;
-    unlocked?: boolean;
-    size?: 'sm' | 'md' | 'lg';
-    onPress?: () => void;
-    unlockDescription?: string;
-}
-
-export function AchievementBadge({ icon, title, unlocked = true, size = 'md', onPress, unlockDescription }: AchievementBadgeProps) {
-    const { colors, styleConfig } = useTheme();
-    const sizes = {
-        sm: { badge: 40, icon: 20 },
-        md: { badge: 56, icon: 28 },
-        lg: { badge: 72, icon: 36 },
-    };
-
-    const s = sizes[size];
-
-    return (
-        <TouchableOpacity
-            style={styles.achievementContainer}
-            onPress={onPress}
-            disabled={unlocked} // Only allow tapping on locked achievements
-        >
-            <View
-                style={[
-                    styles.achievementBadge,
-                    { width: s.badge, height: s.badge, backgroundColor: colors.surfaceLight, borderRadius: styleConfig.borderRadius.md },
-                    !unlocked && { opacity: 0.4 },
-                ]}
-            >
-                <Text style={[styles.achievementIcon, { fontSize: s.icon }, !unlocked && { opacity: 0.3 }]}>
-                    {unlocked ? icon : '🔒'}
-                </Text>
-            </View>
-            <Text style={[styles.achievementTitle, { color: colors.textSecondary }, !unlocked && { opacity: 0.5 }]} numberOfLines={2}>
-                {title}
-            </Text>
-        </TouchableOpacity>
-    );
-}
-
 interface LevelUpModalProps {
     level: number;
     title: string;
@@ -245,25 +202,6 @@ const styles = StyleSheet.create({
     streakLabel: {
         fontSize: FontSize.xs,
         marginTop: Spacing.xs,
-    },
-    // Achievement styles
-    achievementContainer: {
-        alignItems: 'center',
-        width: 80,
-    },
-    achievementBadge: {
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderWidth: 1,
-    },
-    achievementLocked: {
-        opacity: 0.6,
-    },
-    achievementIcon: {},
-    achievementTitle: {
-        fontSize: FontSize.xs,
-        marginTop: Spacing.xs,
-        textAlign: 'center',
     },
     // Level up banner
     levelUpBanner: {
