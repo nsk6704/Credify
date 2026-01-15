@@ -23,7 +23,7 @@
     <img src="https://img.shields.io/badge/Expo-54.0.30-black.svg" alt="Expo" />
     <img src="https://img.shields.io/badge/TypeScript-5.9.2-blue.svg" alt="TypeScript" />
     <img src="https://img.shields.io/badge/Platform-iOS%20%7C%20Android-lightgrey.svg" alt="Platform" />
-    <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License" />
+    <img src="https://img.shields.io/badge/License-BSD--3--Clause-blue.svg" alt="License" />
   </p>
 </div>
 
@@ -260,6 +260,9 @@ Contributions are welcome and appreciated. To contribute:
 
 ---
 
+## License
+
+This project is licensed under the BSD 3-Clause License. See the [LICENSE](LICENSE) file for details.
 
 ---
 
