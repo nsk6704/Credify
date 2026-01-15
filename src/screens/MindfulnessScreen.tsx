@@ -27,6 +27,7 @@ export function MindfulnessScreen() {
     const { state, dispatch, addXP } = useApp();
     const { colors, styleConfig } = useTheme();
     const { mindfulness } = state;
+    const isDark = state.settings.theme === 'dark';
 
     const [showMeditationModal, setShowMeditationModal] = useState(false);
     const [showJournalModal, setShowJournalModal] = useState(false);
@@ -174,7 +175,7 @@ export function MindfulnessScreen() {
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'left', 'right']}>
-            <StatusBar barStyle={colors.statusBar} backgroundColor={colors.background} />
+            <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
             <KeyboardAvoidingView 
                 style={{ flex: 1 }} 
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -394,8 +395,12 @@ export function MindfulnessScreen() {
                 transparent
                 onRequestClose={() => setShowMoodModal(false)}
             >
-                <View style={styles.modalOverlay}>
-                    <View style={[styles.modalContent, { backgroundColor: colors.surface, borderRadius: styleConfig.borderRadius.md }]}>
+                <KeyboardAvoidingView 
+                    style={{ flex: 1 }} 
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                >
+                    <View style={styles.modalOverlay}>
+                        <View style={[styles.modalContent, { backgroundColor: colors.surface, borderRadius: styleConfig.borderRadius.md }]}>
                         <View style={styles.modalHeader}>
                             <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>How are you feeling?</Text>
                             <TouchableOpacity onPress={() => setShowMoodModal(false)}>
@@ -437,8 +442,9 @@ export function MindfulnessScreen() {
                             onPress={handleSaveMood}
                             color={selectedMood.color}
                         />
+                        </View>
                     </View>
-                </View>
+                </KeyboardAvoidingView>
             </Modal>
 
             {/* Journal Modal */}
@@ -448,8 +454,12 @@ export function MindfulnessScreen() {
                 transparent
                 onRequestClose={() => setShowJournalModal(false)}
             >
-                <View style={styles.modalOverlay}>
-                    <View style={[styles.modalContent, { backgroundColor: colors.surface, borderRadius: styleConfig.borderRadius.md }]}>
+                <KeyboardAvoidingView 
+                    style={{ flex: 1 }} 
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                >
+                    <View style={styles.modalOverlay}>
+                        <View style={[styles.modalContent, { backgroundColor: colors.surface, borderRadius: styleConfig.borderRadius.md }]}>
                         <View style={styles.modalHeader}>
                             <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Journal Entry</Text>
                             <TouchableOpacity onPress={() => setShowJournalModal(false)}>
@@ -473,8 +483,9 @@ export function MindfulnessScreen() {
                             color="#8B5CF6"
                             disabled={!journalContent.trim()}
                         />
+                        </View>
                     </View>
-                </View>
+                </KeyboardAvoidingView>
             </Modal>
 
             {/* Gratitude Modal */}
@@ -484,8 +495,12 @@ export function MindfulnessScreen() {
                 transparent
                 onRequestClose={() => setShowGratitudeModal(false)}
             >
-                <View style={styles.modalOverlay}>
-                    <View style={[styles.modalContent, { backgroundColor: colors.surface, borderRadius: styleConfig.borderRadius.md }]}>
+                <KeyboardAvoidingView 
+                    style={{ flex: 1 }} 
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                >
+                    <View style={styles.modalOverlay}>
+                        <View style={[styles.modalContent, { backgroundColor: colors.surface, borderRadius: styleConfig.borderRadius.md }]}>
                         <View style={styles.modalHeader}>
                             <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Gratitude Log</Text>
                             <TouchableOpacity onPress={() => setShowGratitudeModal(false)}>
@@ -518,8 +533,9 @@ export function MindfulnessScreen() {
                             color="#F59E0B"
                             disabled={!gratitudeItems.some(i => i.trim())}
                         />
+                        </View>
                     </View>
-                </View>
+                </KeyboardAvoidingView>
             </Modal>
         </SafeAreaView>
     );

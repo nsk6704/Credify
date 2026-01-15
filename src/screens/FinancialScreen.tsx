@@ -26,6 +26,7 @@ export function FinancialScreen() {
     const { state, dispatch, addXP } = useApp();
     const { colors, styleConfig } = useTheme();
     const { financial } = state;
+    const isDark = state.settings.theme === 'dark';
     const [showAddModal, setShowAddModal] = useState(false);
     const [amount, setAmount] = useState('');
     const [description, setDescription] = useState('');
@@ -78,7 +79,7 @@ export function FinancialScreen() {
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'left', 'right']}>
-            <StatusBar barStyle={colors.statusBar} backgroundColor={colors.background} />
+            <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
             <KeyboardAvoidingView 
                 style={{ flex: 1 }} 
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -200,8 +201,12 @@ export function FinancialScreen() {
                 transparent
                 onRequestClose={() => setShowAddModal(false)}
             >
-                <View style={styles.modalOverlay}>
-                    <View style={[styles.modalContent, { backgroundColor: colors.surface, borderRadius: styleConfig.borderRadius.lg }]}>
+                <KeyboardAvoidingView 
+                    style={{ flex: 1 }} 
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                >
+                    <View style={styles.modalOverlay}>
+                        <View style={[styles.modalContent, { backgroundColor: colors.surface, borderRadius: styleConfig.borderRadius.lg }]}>
                         <View style={styles.modalHeader}>
                             <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Add Expense</Text>
                             <TouchableOpacity onPress={() => setShowAddModal(false)}>
@@ -268,8 +273,9 @@ export function FinancialScreen() {
                             disabled={!amount || parseFloat(amount) <= 0}
                             style={styles.submitButton}
                         />
+                        </View>
                     </View>
-                </View>
+                </KeyboardAvoidingView>
             </Modal>
         </SafeAreaView>
     );

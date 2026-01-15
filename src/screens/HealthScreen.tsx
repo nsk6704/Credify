@@ -25,6 +25,7 @@ export function HealthScreen() {
     const { state, dispatch, addXP } = useApp();
     const { colors, styleConfig } = useTheme();
     const { health } = state;
+    const isDark = state.settings.theme === 'dark';
     const [showWorkoutModal, setShowWorkoutModal] = useState(false);
     const [workoutDuration, setWorkoutDuration] = useState('30');
     const [workoutNotes, setWorkoutNotes] = useState('');
@@ -84,7 +85,7 @@ export function HealthScreen() {
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'left', 'right']}>
-            <StatusBar barStyle={colors.statusBar} backgroundColor={colors.background} />
+            <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
             <KeyboardAvoidingView 
                 style={{ flex: 1 }} 
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
