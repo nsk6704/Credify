@@ -91,35 +91,49 @@ export function StreakCalendar({ weeks = 52 }: StreakCalendarProps) {
         
         let currentStreak = 0;
         let longestStreak = 0;
-        let tempStreak = 0;
-        let lastDate: Date | null = null;
 
         // Count backwards from today for current streak
         let checkDate = new Date();
-        while (true) {
+        let daysChecked = 0;
+        const maxDaysToCheck = 365; // Safety limit
+        
+        while (daysChecked < maxDaysToCheck) {
             const dateStr = format(checkDate, 'yyyy-MM-dd');
             if (activityByDate[dateStr] && activityByDate[dateStr].count > 0) {
                 currentStreak++;
                 checkDate = subDays(checkDate, 1);
+                daysChecked++;
             } else if (dateStr === today) {
                 // Today has no activity, but continue checking
                 checkDate = subDays(checkDate, 1);
+                daysChecked++;
             } else {
                 break;
             }
         }
 
-        // Calculate longest streak
-        dates.forEach(dateStr => {
-            const date = parseISO(dateStr);
-            if (lastDate && Math.abs(date.getTime() - lastDate.getTime()) <= 86400000) { // 1 day in ms
-                tempStreak++;
-            } else {
-                tempStreak = 1;
+        // Calculate longest streak by checking all days sequentially
+        if (dates.length > 0) {
+            const firstDate = parseISO(dates[0]);
+            const lastDate = parseISO(dates[dates.length - 1]);
+            const totalDays = Math.ceil((lastDate.getTime() - firstDate.getTime()) / 86400000) + 1;
+            
+            let tempStreak = 0;
+            let checkStreakDate = firstDate;
+            
+            for (let i = 0; i < totalDays; i++) {
+                const dateStr = format(checkStreakDate, 'yyyy-MM-dd');
+                
+                if (activityByDate[dateStr] && activityByDate[dateStr].count > 0) {
+                    tempStreak++;
+                    longestStreak = Math.max(longestStreak, tempStreak);
+                } else {
+                    tempStreak = 0;
+                }
+                
+                checkStreakDate = addDays(checkStreakDate, 1);
             }
-            longestStreak = Math.max(longestStreak, tempStreak);
-            lastDate = date;
-        });
+        }
 
         return {
             currentStreak,
