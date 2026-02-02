@@ -74,6 +74,7 @@ Stay motivated with a comprehensive progression system.
 - **Experience Points** — Earn XP for every positive action across categories
 - **Level Progression** — Advance through 12+ levels from Beginner to Immortal
 - **Multi-Category Streaks** — Track streaks for financial, health, and mindfulness
+- **Streak Visualizer** — GitHub-style heatmap showing your activity over time
 - **Visual Progress** — See your growth across all life areas
 
 ### Customization
