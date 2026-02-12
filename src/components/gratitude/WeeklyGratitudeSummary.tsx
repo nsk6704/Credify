@@ -11,15 +11,17 @@ interface WeeklyGratitudeSummaryProps {
     gratitudeLogs: GratitudeLog[];
     weekOffset?: number; // 0 = current week, 1 = last week, etc.
     onWeekChange?: (offset: number) => void;
+    defaultExpanded?: boolean; // Control initial expanded state
 }
 
 export function WeeklyGratitudeSummary({ 
     gratitudeLogs, 
     weekOffset = 0,
     onWeekChange,
+    defaultExpanded = true,
 }: WeeklyGratitudeSummaryProps) {
     const { colors, styleConfig } = useTheme();
-    const [isExpanded, setIsExpanded] = useState(true);
+    const [isExpanded, setIsExpanded] = useState(defaultExpanded);
     
     // Calculate the date for the desired week
     const weekDate = new Date();
@@ -132,7 +134,7 @@ export function WeeklyGratitudeSummary({
                                     {group.displayDate}
                                 </Text>
                                 {group.items.map((item, itemIndex) => (
-                                    <View key={`${group.date}-${itemIndex}`} style={styles.gratitudeItem}>
+                                    <View key={`${group.date}-${itemIndex}-${item.substring(0, 20)}`} style={styles.gratitudeItem}>
                                         <View style={[styles.bullet, { backgroundColor: '#F59E0B' }]} />
                                         <Text style={[styles.itemText, { color: colors.textPrimary }]}>
                                             {item}
