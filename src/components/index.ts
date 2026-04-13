@@ -4,3 +4,4 @@ export { ErrorBoundary } from './common/ErrorBoundary';
 export { XPBar, StreakBadge, LevelUpBanner } from './gamification/XPBar';
 export { Splash } from './common/Splash';
 export { WeeklyGratitudeSummary } from './gratitude/WeeklyGratitudeSummary';
+export { StreakCalendar } from './gamification/StreakCalendar';
