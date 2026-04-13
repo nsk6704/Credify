@@ -16,7 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Spacing, FontSize, FontWeight, BorderRadius } from '../constants/theme';
 import { useApp, calculateLevel } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
-import { Card } from '../components';
+import { Card, StreakCalendar } from '../components';
 import { format } from 'date-fns';
 import { SettingsScreen } from './SettingsScreen';
 
@@ -132,6 +132,14 @@ export function ProfileScreen() {
                         </View>
                     </View>
                 </Card>
+
+                {/* Activity Visualizer */}
+                <View style={styles.section}>
+                    <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Activity Timeline</Text>
+                    <Card>
+                        <StreakCalendar weeks={52} />
+                    </Card>
+                </View>
 
                 {/* Stats Grid */}
                 <View style={styles.statsGrid}>
@@ -337,6 +345,15 @@ const styles = StyleSheet.create({
     streakValue: {
         fontSize: FontSize.xl,
         fontWeight: FontWeight.bold,
+    },
+    section: {
+        marginTop: Spacing.lg,
+    },
+    sectionTitle: {
+        fontSize: FontSize.md,
+        fontWeight: FontWeight.semibold,
+        marginBottom: Spacing.md,
+        paddingHorizontal: Spacing.md,
     },
     statsGrid: {
         flexDirection: 'row',
