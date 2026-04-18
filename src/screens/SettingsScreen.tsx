@@ -40,6 +40,16 @@ export function SettingsScreen({ onClose }: SettingsScreenProps) {
     const [waterGoal, setWaterGoal] = useState(health.dailyWaterGoal.toString());
     const [showMeditationModal, setShowMeditationModal] = useState(false);
     const [meditationGoal, setMeditationGoal] = useState(mindfulness.meditationGoal.toString());
+    const [showWeightGoalModal, setShowWeightGoalModal] = useState(false);
+    const toDisplayWeight = (weightKg: number) =>
+        settings.weightUnit === 'kg' ? weightKg : weightKg * 2.20462;
+
+    const toStorageWeight = (value: number) =>
+        settings.weightUnit === 'kg' ? value : value / 2.20462;
+
+    const [weightGoal, setWeightGoal] = useState(
+        health.weightGoal ? toDisplayWeight(health.weightGoal).toFixed(1) : ''
+    );
     const [showStreakInfoModal, setShowStreakInfoModal] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
     const [isImporting, setIsImporting] = useState(false);
@@ -81,6 +91,45 @@ export function SettingsScreen({ onClose }: SettingsScreenProps) {
             },
         });
         setShowMeditationModal(false);
+    };
+
+    const handleSaveWeightGoal = () => {
+        if (!weightGoal) {
+            dispatch({
+                type: 'LOAD_STATE',
+                payload: {
+                    health: { ...health, weightGoal: 0 },
+                },
+            });
+            setShowWeightGoalModal(false);
+            return;
+        }
+
+        const goal = parseFloat(weightGoal);
+        if (isNaN(goal) || goal <= 0) return;
+
+        const goalKg = toStorageWeight(goal);
+
+        dispatch({
+            type: 'LOAD_STATE',
+            payload: {
+                health: { ...health, weightGoal: goalKg },
+            },
+        });
+        setShowWeightGoalModal(false);
+    };
+
+    const handleWeightUnitChange = async (unit: 'kg' | 'lb') => {
+        if (unit === settings.weightUnit) return;
+
+        await updateSettings({ weightUnit: unit });
+        setWeightGoal((prev) => {
+            if (!prev) return prev;
+            const value = parseFloat(prev);
+            if (Number.isNaN(value)) return prev;
+            const converted = unit === 'kg' ? value / 2.20462 : value * 2.20462;
+            return converted.toFixed(1);
+        });
     };
 
     const handleStreakModeChange = async (mode: 'all' | 'any') => {
@@ -444,6 +493,54 @@ export function SettingsScreen({ onClose }: SettingsScreenProps) {
                         </View>
                         <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
                     </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[styles.goalItem, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: styleConfig.borderRadius.md }]}
+                        onPress={() => setShowWeightGoalModal(true)}
+                    >
+                        <View style={[styles.goalIcon, { backgroundColor: colors.health + '20' }]}
+                            >
+                            <Ionicons name="fitness" size={20} color={colors.health} />
+                        </View>
+                        <View style={styles.goalInfo}>
+                            <Text style={[styles.goalLabel, { color: colors.textPrimary }]}>Weight Goal</Text>
+                            <Text style={[styles.goalValue, { color: colors.health }]}
+                                >
+                                {health.weightGoal > 0
+                                    ? `${toDisplayWeight(health.weightGoal).toFixed(1)} ${settings.weightUnit}`
+                                    : 'Not set'}
+                            </Text>
+                        </View>
+                        <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+                    </TouchableOpacity>
+                </View>
+
+                {/* Units */}
+                <View style={styles.section}>
+                    <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Units</Text>
+                    <View style={styles.unitRow}>
+                        <TouchableOpacity
+                            style={[
+                                styles.unitButton,
+                                { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: styleConfig.borderRadius.md },
+                                settings.weightUnit === 'kg' && { borderColor: colors.primary, borderWidth: 2, backgroundColor: colors.primary + '12' },
+                            ]}
+                            onPress={() => handleWeightUnitChange('kg')}
+                        >
+                            <Text style={[styles.unitLabel, { color: settings.weightUnit === 'kg' ? colors.primary : colors.textSecondary }]}>Kilograms</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[
+                                styles.unitButton,
+                                styles.unitButtonLast,
+                                { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: styleConfig.borderRadius.md },
+                                settings.weightUnit === 'lb' && { borderColor: colors.primary, borderWidth: 2, backgroundColor: colors.primary + '12' },
+                            ]}
+                            onPress={() => handleWeightUnitChange('lb')}
+                        >
+                            <Text style={[styles.unitLabel, { color: settings.weightUnit === 'lb' ? colors.primary : colors.textSecondary }]}>Pounds</Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
 
                 {/* Data Management */}
@@ -641,6 +738,59 @@ export function SettingsScreen({ onClose }: SettingsScreenProps) {
                 </View>
             </Modal>
 
+            {/* Weight Goal Modal */}
+            <Modal
+                visible={showWeightGoalModal}
+                animationType="slide"
+                transparent
+                onRequestClose={() => setShowWeightGoalModal(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={[styles.modalContent, { backgroundColor: colors.surface, borderRadius: styleConfig.borderRadius.lg }]}
+                    >
+                        <TouchableOpacity
+                            style={styles.modalCloseButton}
+                            onPress={() => setShowWeightGoalModal(false)}
+                        >
+                            <Ionicons name="close" size={24} color={colors.textMuted} />
+                        </TouchableOpacity>
+
+                        <View style={[styles.modalIconContainer, { backgroundColor: colors.health + '20' }]}
+                            >
+                            <Ionicons name="fitness" size={32} color={colors.health} />
+                        </View>
+
+                        <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Weight Goal</Text>
+                        <Text style={[styles.modalDescription, { color: colors.textSecondary }]}
+                            >
+                            Set your target weight to track progress
+                        </Text>
+
+                        <View style={[styles.inputContainer, { backgroundColor: colors.surfaceLight, borderRadius: styleConfig.borderRadius.md }]}
+                        >
+                            <TextInput
+                                style={[styles.inputField, styles.inputFieldCentered, { color: colors.textPrimary }]}
+                                value={weightGoal}
+                                onChangeText={setWeightGoal}
+                                keyboardType="decimal-pad"
+                                placeholder={settings.weightUnit === 'kg' ? '70' : '154'}
+                                placeholderTextColor={colors.textMuted}
+                            />
+                            <Text style={[styles.inputSuffix, { color: colors.textSecondary }]}
+                                >
+                                {settings.weightUnit}
+                            </Text>
+                        </View>
+
+                        <Button
+                            title="Save Goal"
+                            onPress={handleSaveWeightGoal}
+                            color={colors.health}
+                        />
+                    </View>
+                </View>
+            </Modal>
+
             {/* Streak Info Modal */}
             <Modal
                 visible={showStreakInfoModal}
@@ -779,6 +929,26 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         flexWrap: 'wrap',
         marginHorizontal: -Spacing.xs,
+    },
+    unitRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: Spacing.sm,
+    },
+    unitButton: {
+        flex: 1,
+        paddingVertical: Spacing.md,
+        paddingHorizontal: Spacing.md,
+        borderWidth: 1,
+        marginRight: Spacing.sm,
+        alignItems: 'center',
+    },
+    unitButtonLast: {
+        marginRight: 0,
+    },
+    unitLabel: {
+        fontSize: FontSize.sm,
+        fontWeight: FontWeight.semibold,
     },
     styleCard: {
         width: '48%',

@@ -76,6 +76,13 @@ export interface WaterLog {
     date: string;
 }
 
+export interface WeightLog {
+    id: string;
+    weight: number;
+    date: string;
+    createdAt: string;
+}
+
 export interface MealLog {
     id: string;
     type: 'breakfast' | 'lunch' | 'dinner' | 'snack';
@@ -88,7 +95,9 @@ export interface MealLog {
 export interface HealthState {
     workouts: Workout[];
     waterLogs: WaterLog[];
+    weightLogs: WeightLog[];
     meals: MealLog[];
+    weightGoal: number;
     dailyWaterGoal: number;
     dailyCalorieGoal: number;
     dailyStepGoal: number;
@@ -142,6 +151,7 @@ export interface AppSettings {
     streakMode: 'all' | 'any'; // 'all' = all categories required, 'any' = any one category counts
     theme: 'dark' | 'light';
     style: AppStyle;
+    weightUnit: 'kg' | 'lb';
 }
 
 // App state
@@ -169,6 +179,10 @@ export type AppAction =
     // Health actions
     | { type: 'ADD_WORKOUT'; payload: Workout }
     | { type: 'LOG_WATER'; payload: WaterLog }
+    | { type: 'ADD_WEIGHT_LOG'; payload: WeightLog }
+    | { type: 'UPDATE_WEIGHT_LOG'; payload: WeightLog }
+    | { type: 'DELETE_WEIGHT_LOG'; payload: string }
+    | { type: 'DELETE_WEIGHT_LOGS_BY_DATE'; payload: string }
     | { type: 'ADD_MEAL'; payload: MealLog }
     // Mindfulness actions
     | { type: 'ADD_MEDITATION'; payload: MeditationSession }
