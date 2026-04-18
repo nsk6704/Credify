@@ -258,11 +258,11 @@ export function HealthScreen() {
     };
 
     const recentWorkouts = health.workouts.slice(0, 5);
-    const recentWeights = health.weightLogs.slice(0, recentWeightLimit);
     const sortedWeightLogs = [...health.weightLogs].sort((a, b) => {
         if (a.date === b.date) return a.createdAt.localeCompare(b.createdAt);
         return a.date.localeCompare(b.date);
     });
+    const recentWeights = sortedWeightLogs.slice(-recentWeightLimit).reverse();
     const chartLogs = sortedWeightLogs.slice(-chartLimit);
     const displayChartValues = chartLogs.map(log => toDisplayWeight(log.weight));
     const minWeight = displayChartValues.reduce((min, value) => Math.min(min, value), Infinity);
