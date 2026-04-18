@@ -120,6 +120,8 @@ export function SettingsScreen({ onClose }: SettingsScreenProps) {
     };
 
     const handleWeightUnitChange = async (unit: 'kg' | 'lb') => {
+        if (unit === settings.weightUnit) return;
+
         await updateSettings({ weightUnit: unit });
         setWeightGoal((prev) => {
             if (!prev) return prev;
