@@ -169,11 +169,33 @@ async function createTables(): Promise<void> {
         CREATE TABLE IF NOT EXISTS weight_logs (
             id TEXT PRIMARY KEY,
             weight REAL NOT NULL,
-            date TEXT NOT NULL,
+            date TEXT NOT NULL UNIQUE,
             createdAt TEXT NOT NULL
         );
     `);
 
+    // Ensure existing databases also enforce one weight log per date.
+    // First remove duplicates, keeping the most recently created row for each date.
+    await db.execAsync(`
+        DELETE FROM weight_logs
+        WHERE id NOT IN (
+            SELECT id
+            FROM (
+                SELECT id,
+                       ROW_NUMBER() OVER (
+                           PARTITION BY date
+                           ORDER BY datetime(createdAt) DESC, id DESC
+                       ) AS row_num
+                FROM weight_logs
+            )
+            WHERE row_num = 1
+        );
+    `);
+
+    await db.execAsync(`
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_weight_logs_date_unique
+        ON weight_logs(date);
+    `);
     // Meals table
     await db.execAsync(`
         CREATE TABLE IF NOT EXISTS meals (
