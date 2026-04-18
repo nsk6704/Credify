@@ -18,6 +18,7 @@ const initialSettings: AppSettings = {
     streakMode: 'all',
     theme: 'dark',
     style: 'modern',
+    weightUnit: 'kg',
 };
 
 const initialState: AppState = {
@@ -32,7 +33,9 @@ const initialState: AppState = {
     health: {
         workouts: [],
         waterLogs: [],
+        weightLogs: [],
         meals: [],
+        weightGoal: 0,
         dailyWaterGoal: 8,
         dailyCalorieGoal: 2000,
         dailyStepGoal: 10000,
@@ -208,6 +211,44 @@ function appReducer(state: AppState, action: AppAction): AppState {
                 },
             };
 
+        case 'UPDATE_WEIGHT_LOG':
+            return {
+                ...state,
+                health: {
+                    ...state.health,
+                    weightLogs: state.health.weightLogs.map(log =>
+                        log.id === action.payload.id ? action.payload : log
+                    ),
+                },
+            };
+
+        case 'DELETE_WEIGHT_LOG':
+            return {
+                ...state,
+                health: {
+                    ...state.health,
+                    weightLogs: state.health.weightLogs.filter(log => log.id !== action.payload),
+                },
+            };
+
+        case 'DELETE_WEIGHT_LOGS_BY_DATE':
+            return {
+                ...state,
+                health: {
+                    ...state.health,
+                    weightLogs: state.health.weightLogs.filter(log => log.date !== action.payload),
+                },
+            };
+
+        case 'ADD_WEIGHT_LOG':
+            return {
+                ...state,
+                health: {
+                    ...state.health,
+                    weightLogs: [action.payload, ...state.health.weightLogs],
+                },
+            };
+
         // Mindfulness actions
         case 'ADD_MEDITATION':
             return {
@@ -339,10 +380,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
             await Database.saveSetting('dailyWaterGoal', state.health.dailyWaterGoal.toString());
             await Database.saveSetting('dailyCalorieGoal', state.health.dailyCalorieGoal.toString());
             await Database.saveSetting('dailyStepGoal', state.health.dailyStepGoal.toString());
+            await Database.saveSetting('weightGoal', state.health.weightGoal.toString());
             await Database.saveSetting('meditationGoal', state.mindfulness.meditationGoal.toString());
             await Database.saveSetting('theme', state.settings.theme);
             await Database.saveSetting('style', state.settings.style);
             await Database.saveSetting('streakMode', state.settings.streakMode);
+            await Database.saveSetting('weightUnit', state.settings.weightUnit);
         } catch (error) {
             console.error('Failed to save state to SQLite:', error);
         }
@@ -374,7 +417,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
                     health: {
                         workouts: [],
                         waterLogs: [],
+                        weightLogs: [],
                         meals: [],
+                        weightGoal: 0,
                         dailyWaterGoal: 8,
                         dailyCalorieGoal: 2000,
                         dailyStepGoal: 10000,

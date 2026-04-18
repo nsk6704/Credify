@@ -164,6 +164,16 @@ async function createTables(): Promise<void> {
         );
     `);
 
+    // Weight logs table
+    await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS weight_logs (
+            id TEXT PRIMARY KEY,
+            weight REAL NOT NULL,
+            date TEXT NOT NULL,
+            createdAt TEXT NOT NULL
+        );
+    `);
+
     // Meals table
     await db.execAsync(`
         CREATE TABLE IF NOT EXISTS meals (
@@ -376,6 +386,43 @@ export async function logWater(log: { id: string; glasses: number; date: string 
     }
 }
 
+export async function getWeightLogs() {
+    const database = await getDb();
+    return await database.getAllAsync('SELECT * FROM weight_logs ORDER BY date DESC, createdAt DESC');
+}
+
+export async function addWeightLog(log: { id: string; weight: number; date: string; createdAt: string }) {
+    const database = await getDb();
+    await database.runAsync(
+        'INSERT INTO weight_logs (id, weight, date, createdAt) VALUES (?, ?, ?, ?)',
+        log.id,
+        log.weight,
+        log.date,
+        log.createdAt
+    );
+}
+
+export async function updateWeightLog(log: { id: string; weight: number; date: string; createdAt: string }) {
+    const database = await getDb();
+    await database.runAsync(
+        'UPDATE weight_logs SET weight = ?, date = ?, createdAt = ? WHERE id = ?',
+        log.weight,
+        log.date,
+        log.createdAt,
+        log.id
+    );
+}
+
+export async function deleteWeightLog(id: string) {
+    const database = await getDb();
+    await database.runAsync('DELETE FROM weight_logs WHERE id = ?', id);
+}
+
+export async function deleteWeightLogsByDate(date: string) {
+    const database = await getDb();
+    await database.runAsync('DELETE FROM weight_logs WHERE date = ?', date);
+}
+
 export async function getMeals() {
     const database = await getDb();
     return await database.getAllAsync('SELECT * FROM meals ORDER BY createdAt DESC');
@@ -455,6 +502,7 @@ export async function loadAppState(): Promise<Partial<AppState>> {
     const goals = await getFinancialGoals() as any[];
     const workouts = await getWorkouts() as any[];
     const waterLogs = await getWaterLogs() as any[];
+    const weightLogs = await getWeightLogs() as any[];
     const meals = await getMeals() as any[];
     const meditations = await getMeditations() as any[];
     const journals = await getJournals() as any[];
@@ -468,9 +516,11 @@ export async function loadAppState(): Promise<Partial<AppState>> {
         const dailyCalorieGoal = await getSetting('dailyCalorieGoal');
         const dailyStepGoal = await getSetting('dailyStepGoal');
         const meditationGoal = await getSetting('meditationGoal');
+        const weightGoal = await getSetting('weightGoal');
         const theme = await getSetting('theme');
         const style = await getSetting('style');
         const streakMode = await getSetting('streakMode');
+        const weightUnit = await getSetting('weightUnit');
     
         // Normalize streak mode to the expected type ('all' | 'any')
         const normalizedStreakMode = (streakMode === 'all' || streakMode === 'any') ? (streakMode as 'all' | 'any') : 'all';
@@ -487,7 +537,9 @@ export async function loadAppState(): Promise<Partial<AppState>> {
             health: {
                 workouts,
                 waterLogs,
+                weightLogs,
                 meals,
+                weightGoal: weightGoal ? parseFloat(weightGoal) : 0,
                 dailyWaterGoal: dailyWaterGoal ? parseInt(dailyWaterGoal) : 8,
                 dailyCalorieGoal: dailyCalorieGoal ? parseInt(dailyCalorieGoal) : 2000,
                 dailyStepGoal: dailyStepGoal ? parseInt(dailyStepGoal) : 10000,
@@ -503,6 +555,7 @@ export async function loadAppState(): Promise<Partial<AppState>> {
                 theme: (theme as 'light' | 'dark') || 'dark',
                 style: (style as 'modern' | 'classic') || 'modern',
                 streakMode: normalizedStreakMode,
+                weightUnit: (weightUnit as 'kg' | 'lb') || 'kg',
             },
         };
 }
@@ -518,6 +571,7 @@ export async function resetAllData(): Promise<void> {
         DELETE FROM financial_goals;
         DELETE FROM workouts;
         DELETE FROM water_logs;
+        DELETE FROM weight_logs;
         DELETE FROM meals;
         DELETE FROM meditations;
         DELETE FROM journals;
@@ -591,6 +645,17 @@ export async function importData(jsonString: string): Promise<boolean> {
             for (const log of data.health.waterLogs) {
                 await logWater(log);
             }
+        }
+
+        // Import weight logs
+        if (data.health?.weightLogs) {
+            for (const log of data.health.weightLogs) {
+                await addWeightLog(log);
+            }
+        }
+
+        if (data.health && Object.prototype.hasOwnProperty.call(data.health, 'weightGoal')) {
+            await saveSetting('weightGoal', String(data.health.weightGoal));
         }
         
         // Import meals
