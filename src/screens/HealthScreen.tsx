@@ -293,6 +293,7 @@ export function HealthScreen() {
     const getLogsWithinDays = (days: number) => {
         const cutoff = new Date();
         cutoff.setDate(cutoff.getDate() - days + 1);
+        cutoff.setHours(0, 0, 0, 0);
         return sortedWeightLogs.filter(log => parseISO(log.date) >= cutoff);
     };
 
