@@ -18,7 +18,7 @@ import { Spacing, FontSize, FontWeight, BorderRadius } from '../constants/theme'
 import { MOOD_OPTIONS, XP_CONFIG } from '../constants/gamification';
 import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
-import { Button, Card } from '../components';
+import { Button, Card, WeeklyGratitudeSummary } from '../components';
 import { MeditationSession, JournalEntry, MoodEntry, GratitudeLog } from '../types';
 import * as Database from '../lib/database';
 import { format } from 'date-fns';
@@ -49,6 +49,7 @@ export function MindfulnessScreen() {
 
     // Gratitude
     const [gratitudeItems, setGratitudeItems] = useState(['', '', '']);
+    const [weekOffset, setWeekOffset] = useState(0);
 
     const today = format(new Date(), 'yyyy-MM-dd');
     const todayMeditations = mindfulness.meditations.filter(m => m.date === today);
@@ -254,6 +255,15 @@ export function MindfulnessScreen() {
                             <Text style={[styles.actionXP, { color: colors.xp }]}>+5 XP</Text>
                         </TouchableOpacity>
                     </View>
+                </View>
+
+                {/* Weekly Gratitude Summary */}
+                <View style={styles.section}>
+                    <WeeklyGratitudeSummary 
+                        gratitudeLogs={mindfulness.gratitudeLogs}
+                        weekOffset={weekOffset}
+                        onWeekChange={setWeekOffset}
+                    />
                 </View>
 
                 {/* Recent Journal Entries */}
