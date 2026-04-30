@@ -22,7 +22,7 @@
     <img src="https://img.shields.io/badge/React%20Native-0.81.5-blue.svg" alt="React Native" />
     <img src="https://img.shields.io/badge/Expo-54.0.30-black.svg" alt="Expo" />
     <img src="https://img.shields.io/badge/TypeScript-5.9.2-blue.svg" alt="TypeScript" />
-    <img src="https://img.shields.io/badge/Platform-iOS%20%7C%20Android-lightgrey.svg" alt="Platform" />
+    <img src="https://img.shields.io/badge/Platform-Android-lightgrey.svg" alt="Platform" />
     <img src="https://img.shields.io/badge/License-BSD--3--Clause-blue.svg" alt="License" />
   </p>
 </div>
