@@ -1,7 +1,7 @@
-# Credify
+# UpWell
 
 <div align="center">
-  <img src="./assets/main-icon.png" alt="Credify" width="120" height="120" />
+  <img src="./assets/main-icon.svg" alt="UpWell" width="120" height="120" />
   
   <p align="center">
     <strong>Personal Wellness & Finance Tracker</strong>
@@ -31,9 +31,10 @@
 
 ## Overview
 
-Credify is a cross-platform mobile application designed to help you build lasting healthy routines and financial discipline. With unified tracking across expenses, workouts, and mindfulness practices, Credify keeps all aspects of your personal wellness in one place.
+UpWell is a cross-platform mobile application designed to help you build lasting healthy routines and financial discipline. With unified tracking across expenses, workouts, and mindfulness practices, UpWell keeps all aspects of your personal wellness in one place.
 
 **Key Highlights:**
+
 - Unified tracking for finances, health, and mindfulness
 - Gamification system with XP, levels, and streaks
 - Modern, customizable interface with light and dark themes
@@ -45,6 +46,7 @@ Credify is a cross-platform mobile application designed to help you build lastin
 ## Features
 
 ### Financial Management
+
 Track your financial health with comprehensive expense logging and budget management.
 
 - **Expense Tracking** — Log transactions with customizable categories
@@ -53,6 +55,7 @@ Track your financial health with comprehensive expense logging and budget manage
 - **Spending Analytics** — Understand your spending patterns at a glance
 
 ### Health & Fitness
+
 Monitor your physical well-being and build consistent exercise habits.
 
 - **Workout Logging** — Record exercises with duration, calories, and notes
@@ -61,6 +64,7 @@ Monitor your physical well-being and build consistent exercise habits.
 - **Activity Streaks** — Build consistency with daily streak tracking
 
 ### Mindfulness & Well-being
+
 Cultivate mental wellness through journaling and meditation practices.
 
 - **Meditation Sessions** — Log guided meditations, timers, or breathing exercises
@@ -69,6 +73,7 @@ Cultivate mental wellness through journaling and meditation practices.
 - **Mood Tracking** — Monitor emotional patterns over time
 
 ### Gamification
+
 Stay motivated with a comprehensive progression system.
 
 - **Experience Points** — Earn XP for every positive action across categories
@@ -77,6 +82,7 @@ Stay motivated with a comprehensive progression system.
 - **Visual Progress** — See your growth across all life areas
 
 ### Customization
+
 Personalize your experience to match your preferences.
 
 - **Theme Options** — Choose from automatic, light, or dark mode
@@ -85,6 +91,7 @@ Personalize your experience to match your preferences.
 - **Streak Modes** — Toggle between challenge mode and easy mode
 
 ### Data & Privacy
+
 Your data stays yours, stored securely on your device.
 
 - **Local Storage** — All data stored in a secure SQLite database
@@ -112,10 +119,10 @@ _Screenshots coming soon_
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/credify.git
+git clone https://github.com/yourusername/upwell.git
 
 # Navigate to the project directory
-cd credify
+cd upwell
 
 # Install dependencies
 npm install
@@ -176,21 +183,25 @@ npm run build:ios
 ## Tech Stack
 
 ### Core
+
 - [React Native](https://reactnative.dev/) — Cross-platform mobile framework
 - [Expo](https://expo.dev/) — Development platform and build tooling
 - [TypeScript](https://www.typescriptlang.org/) — Type-safe JavaScript
 
 ### State & Storage
+
 - React Context API — Global state management
 - [expo-sqlite](https://docs.expo.dev/versions/latest/sdk/sqlite/) — Local database
 - AsyncStorage — Lightweight key-value storage
 
 ### Navigation & UI
+
 - [React Navigation](https://reactnavigation.org/) — Routing and navigation
 - [Expo Vector Icons](https://docs.expo.dev/guides/icons/) — Icon library
 - React Native Safe Area Context — Safe area handling
 
 ### Utilities
+
 - [date-fns](https://date-fns.org/) — Date manipulation and formatting
 - React Hooks — Modern React patterns
 
@@ -199,7 +210,7 @@ npm run build:ios
 ## Project Structure
 
 ```
-credify/
+upwell/
 ├── src/
 │   ├── components/          # Reusable UI components
 │   │   ├── common/         # Buttons, cards, error boundaries
@@ -269,6 +280,7 @@ This project is licensed under the BSD 3-Clause License. See the [LICENSE](LICEN
 ## Acknowledgments
 
 Built with:
+
 - [Expo](https://expo.dev/) — Mobile development platform
 - [Expo Vector Icons](https://docs.expo.dev/guides/icons/) — Icon library
 - [date-fns](https://date-fns.org/) — Date utilities
@@ -278,7 +290,7 @@ Built with:
 
 ## Support
 
-For bug reports and feature requests, please [open an issue](https://github.com/nsk6704/Credify/issues).
+For bug reports and feature requests, please [open an issue](https://github.com/nsk6704/UpWell/issues).
 
 ---
 

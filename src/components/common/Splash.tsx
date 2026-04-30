@@ -44,9 +44,9 @@ export function Splash({ loadingText = 'Loading...' }: { loadingText?: string })
   return (
     <Animated.View style={[styles.container, { backgroundColor: colors.background, opacity: fadeAnim }]}>  
       <LogoPulse>
-        <Image source={require('../../../assets/main-icon.png')} style={styles.logo} resizeMode="contain" />
+        <Image source={require('../../../assets/main-icon.svg')} style={styles.logo} resizeMode="contain" />
       </LogoPulse>
-      <Text style={[styles.title, { color: colors.primary }]}>Credify</Text>
+      <Text style={[styles.title, { color: colors.primary }]}>UpWell</Text>
       <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{loadingText}</Text>
     </Animated.View>
   );

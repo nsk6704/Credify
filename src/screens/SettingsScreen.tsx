@@ -117,7 +117,7 @@ export function SettingsScreen({ onClose }: SettingsScreenProps) {
         try {
             setIsExporting(true);
             const jsonData = await Database.exportAllData();
-            const fileName = `credify-backup-${new Date().toISOString().split('T')[0]}.csv`;
+            const fileName = `upwell-backup-${new Date().toISOString().split('T')[0]}.csv`;
             // Use documentDirectory if available, otherwise fallback to cacheDirectory
 
                         let documentDir = (FileSystem as any).documentDirectory || (FileSystem as any).cacheDirectory;
@@ -160,7 +160,7 @@ export function SettingsScreen({ onClose }: SettingsScreenProps) {
             if (await Sharing.isAvailableAsync()) {
                 await Sharing.shareAsync(filePath, {
                     mimeType: 'text/csv',
-                    dialogTitle: 'Export Credify Backup',
+                    dialogTitle: 'Export UpWell Backup',
                 });
             } else {
                 Alert.alert('Export Complete', `Backup saved to ${fileName}`);
@@ -205,7 +205,7 @@ export function SettingsScreen({ onClose }: SettingsScreenProps) {
                             );
                         } catch (error) {
                             console.error('Import failed:', error);
-                            Alert.alert('Import Failed', 'Could not import the backup file. Make sure it\'s a valid Credify backup.');
+                            Alert.alert('Import Failed', 'Could not import the backup file. Make sure it\'s a valid UpWell backup.');
                         } finally {
                             setIsImporting(false);
                         }

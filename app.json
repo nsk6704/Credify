@@ -1,33 +1,33 @@
 {
   "expo": {
-    "name": "Credify",
-    "slug": "credify",
+    "name": "UpWell",
+    "slug": "upwell",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/main-icon.png",
+    "icon": "./assets/main-icon.svg",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/main-icon.png",
+      "image": "./assets/main-icon.svg",
       "resizeMode": "contain",
       "backgroundColor": "#0A0A0F"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.credify.app",
+      "bundleIdentifier": "com.upwell.app",
       "buildNumber": "1"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/main-icon.png",
+        "foregroundImage": "./assets/main-icon.svg",
         "backgroundColor": "#0A0A0F"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.credify.app",
+      "package": "com.upwell.app",
       "versionCode": 1
     },
     "web": {
-      "favicon": "./assets/main-icon.png"
+      "favicon": "./assets/main-icon.svg"
     },
     "extra": {
       "eas": {

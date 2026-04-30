@@ -1,7 +1,7 @@
 import * as SQLite from 'expo-sqlite';
 import { AppState, User, Streaks, FinancialState, HealthState, MindfulnessState } from '../types';
 
-const DATABASE_NAME = 'credify.db';
+const DATABASE_NAME = 'upwell.db';
 
 let db: SQLite.SQLiteDatabase | null = null;
 let initPromise: Promise<SQLite.SQLiteDatabase> | null = null;
