@@ -1,7 +1,7 @@
 # UpWell
 
 <div align="center">
-  <img src="./assets/main-icon.svg" alt="UpWell" width="120" height="120" />
+  <img src="./assets/splash.png" alt="UpWell" width="120" height="120" />
   
   <p align="center">
     <strong>Personal Wellness & Finance Tracker</strong>
