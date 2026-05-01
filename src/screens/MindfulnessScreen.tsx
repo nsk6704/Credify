@@ -87,7 +87,7 @@ export function MindfulnessScreen() {
 
         // Save meditation
         const meditation: MeditationSession = {
-            id: Date.now().toString(),
+            id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             duration: meditationTime,
             type: 'timer',
             date: today,
@@ -107,7 +107,7 @@ export function MindfulnessScreen() {
         if (!journalContent.trim()) return;
 
         const journal: JournalEntry = {
-            id: Date.now().toString(),
+            id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             content: journalContent,
             mood: todayMood?.mood,
             date: today,
@@ -126,7 +126,7 @@ export function MindfulnessScreen() {
 
     const handleSaveMood = async () => {
         const mood: MoodEntry = {
-            id: Date.now().toString(),
+            id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             mood: selectedMood.id,
             notes: moodNotes,
             date: today,
@@ -148,7 +148,7 @@ export function MindfulnessScreen() {
         if (items.length === 0) return;
 
         const gratitude: GratitudeLog = {
-            id: Date.now().toString(),
+            id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             items,
             date: today,
             createdAt: new Date().toISOString(),

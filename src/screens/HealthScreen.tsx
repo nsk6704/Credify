@@ -91,7 +91,7 @@ export function HealthScreen() {
 
     const handleAddWater = async () => {
         const waterLog: WaterLog = {
-            id: Date.now().toString(),
+            id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             glasses: 1,
             date: today,
         };
@@ -108,7 +108,7 @@ export function HealthScreen() {
         if (!workoutDuration || parseInt(workoutDuration) <= 0) return;
 
         const workout: Workout = {
-            id: Date.now().toString(),
+            id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             type: selectedWorkout.id,
             duration: parseInt(workoutDuration),
             notes: workoutNotes,
@@ -130,7 +130,7 @@ export function HealthScreen() {
 
     const addWeightLog = async (weight: number, date: string) => {
         const weightLog: WeightLog = {
-            id: Date.now().toString(),
+            id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             weight,
             date,
             createdAt: new Date().toISOString(),

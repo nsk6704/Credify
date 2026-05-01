@@ -342,7 +342,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             } else {
                 // Create new user for first-time launch
                 const newUser: User = {
-                    id: Date.now().toString(),
+                    id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
                     name: 'Player',
                     createdAt: new Date().toISOString(),
                     totalXP: 0,
@@ -357,7 +357,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             console.error('Failed to load state from SQLite:', error);
             // Create new user on error
             const newUser: User = {
-                id: Date.now().toString(),
+                id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
                 name: 'Player',
                 createdAt: new Date().toISOString(),
                 totalXP: 0,
@@ -395,7 +395,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         try {
             await Database.resetAllData();
             const newUser: User = {
-                id: Date.now().toString(),
+                id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
                 name: 'Player',
                 createdAt: new Date().toISOString(),
                 totalXP: 0,
