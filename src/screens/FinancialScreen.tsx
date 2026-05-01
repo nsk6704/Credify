@@ -55,7 +55,7 @@ export function FinancialScreen() {
         if (!amount || parseFloat(amount) <= 0) return;
 
         const newExpense: Expense = {
-            id: Date.now().toString(),
+            id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             amount: parseFloat(amount),
             category: selectedCategory.id,
             description: description || selectedCategory.name,
