@@ -4,11 +4,11 @@
     "slug": "upwell",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/main-icon.svg",
+    "icon": "./assets/main-icon.png",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/main-icon.svg",
+      "image": "./assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#0A0A0F"
     },
@@ -19,7 +19,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/main-icon.svg",
+        "foregroundImage": "./assets/main-icon.png",
         "backgroundColor": "#0A0A0F"
       },
       "edgeToEdgeEnabled": true,
@@ -27,7 +27,7 @@
       "versionCode": 1
     },
     "web": {
-      "favicon": "./assets/main-icon.svg"
+      "favicon": "./assets/main-icon.png"
     },
     "extra": {
       "eas": {

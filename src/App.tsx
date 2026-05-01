@@ -22,7 +22,7 @@ function AppContent() {
 
     // Loading screen
     if (state.isLoading || showSplash) {
-        return <Splash loadingText="Loading your experience..."  />;
+        return <Splash />;
     }
 
     // Main app
