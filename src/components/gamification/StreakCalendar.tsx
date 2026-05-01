@@ -231,9 +231,9 @@ export function StreakCalendar({ weeks = 52 }: StreakCalendarProps) {
                     {/* Day labels */}
                     <View style={styles.dayLabelsContainer}>
                         <View style={styles.dayLabels}>
-                            {dayNames.map((day) => (
+                            {dayNames.map((day, index) => (
                                 <Text
-                                    key={day}
+                                    key={index}
                                     style={[styles.dayLabel, { color: colors.textMuted }]}
                                 >
                                     {day}
@@ -257,7 +257,7 @@ export function StreakCalendar({ weeks = 52 }: StreakCalendarProps) {
                                                 {
                                                     backgroundColor: getIntensityColor(day.count),
                                                     borderColor: isTodayDate ? colors.primary : 'transparent',
-                                                    borderRadius: styleConfig.borderRadius.xs,
+                                                    borderRadius: styleConfig.borderRadius.sm,
                                                 },
                                             ]}
                                             accessibilityLabel={`${format(parseISO(day.date), 'EEEE, MMMM d, yyyy')}: ${day.count} ${day.count === 1 ? 'activity' : 'activities'}`}
@@ -273,11 +273,11 @@ export function StreakCalendar({ weeks = 52 }: StreakCalendarProps) {
                     <View style={styles.legend}>
                         <Text style={[styles.legendLabel, { color: colors.textMuted }]}>Less</Text>
                         <View style={styles.legendBoxes}>
-                            <View style={[styles.legendBox, { backgroundColor: colors.surfaceLight, borderRadius: styleConfig.borderRadius.xs }]} />
-                            <View style={[styles.legendBox, { backgroundColor: colors.streak + '30', borderRadius: styleConfig.borderRadius.xs }]} />
-                            <View style={[styles.legendBox, { backgroundColor: colors.streak + '60', borderRadius: styleConfig.borderRadius.xs }]} />
-                            <View style={[styles.legendBox, { backgroundColor: colors.streak + '90', borderRadius: styleConfig.borderRadius.xs }]} />
-                            <View style={[styles.legendBox, { backgroundColor: colors.streak, borderRadius: styleConfig.borderRadius.xs }]} />
+                            <View style={[styles.legendBox, { backgroundColor: colors.surfaceLight, borderRadius: styleConfig.borderRadius.sm }]} />
+                            <View style={[styles.legendBox, { backgroundColor: colors.streak + '30', borderRadius: styleConfig.borderRadius.sm }]} />
+                            <View style={[styles.legendBox, { backgroundColor: colors.streak + '60', borderRadius: styleConfig.borderRadius.sm }]} />
+                            <View style={[styles.legendBox, { backgroundColor: colors.streak + '90', borderRadius: styleConfig.borderRadius.sm }]} />
+                            <View style={[styles.legendBox, { backgroundColor: colors.streak, borderRadius: styleConfig.borderRadius.sm }]} />
                         </View>
                         <Text style={[styles.legendLabel, { color: colors.textMuted }]}>More</Text>
                     </View>
