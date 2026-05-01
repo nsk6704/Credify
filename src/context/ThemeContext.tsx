@@ -6,6 +6,7 @@ import { AppStyle } from '../types';
 // Style configurations for different visual styles
 interface StyleConfig {
     borderRadius: {
+        xs: number;
         sm: number;
         md: number;
         lg: number;
@@ -21,7 +22,7 @@ interface StyleConfig {
 
 const StyleConfigs: Record<AppStyle, StyleConfig> = {
     modern: {
-        borderRadius: { sm: 8, md: 12, lg: 16, xl: 24, full: 9999 },
+        borderRadius: { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, full: 9999 },
         cardPadding: 16,
         borderWidth: 1,
         shadowOpacity: 0.1,
@@ -29,7 +30,7 @@ const StyleConfigs: Record<AppStyle, StyleConfig> = {
         fontScale: 1,
     },
     minimal: {
-        borderRadius: { sm: 0, md: 0, lg: 0, xl: 0, full: 9999 },
+        borderRadius: { xs: 0, sm: 0, md: 0, lg: 0, xl: 0, full: 9999 },
         cardPadding: 14,
         borderWidth: 0,
         shadowOpacity: 0,
@@ -37,7 +38,7 @@ const StyleConfigs: Record<AppStyle, StyleConfig> = {
         fontScale: 0.95,
     },
     classic: {
-        borderRadius: { sm: 0, md: 2, lg: 4, xl: 4, full: 9999 },
+        borderRadius: { xs: 0, sm: 0, md: 2, lg: 4, xl: 4, full: 9999 },
         cardPadding: 18,
         borderWidth: 2,
         shadowOpacity: 0,
@@ -45,7 +46,7 @@ const StyleConfigs: Record<AppStyle, StyleConfig> = {
         fontScale: 1.05,
     },
     vibrant: {
-        borderRadius: { sm: 16, md: 20, lg: 24, xl: 32, full: 9999 },
+        borderRadius: { xs: 0, sm: 16, md: 20, lg: 24, xl: 32, full: 9999 },
         cardPadding: 22,
         borderWidth: 0,
         shadowOpacity: 0.2,
