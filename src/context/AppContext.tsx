@@ -3,7 +3,7 @@ import { AppState as RNAppState } from 'react-native';
 import { AppState, AppAction, User, Streaks, AppSettings } from '../types';
 import { XP_CONFIG } from '../constants/gamification';
 import * as Database from '../lib/database';
-import { format, subDays, differenceInDays, parseISO } from 'date-fns';
+import { format, subDays } from 'date-fns';
 
 // Initial state
 const initialStreaks: Streaks = {
@@ -15,7 +15,7 @@ const initialStreaks: Streaks = {
 };
 
 const initialSettings: AppSettings = {
-    streakMode: 'all',
+    streakMode: 'any',
     theme: 'dark',
     style: 'modern',
     weightUnit: 'kg',
@@ -107,6 +107,16 @@ function appReducer(state: AppState, action: AppAction): AppState {
                         ...state.user.streaks,
                         [action.payload.category]: action.payload.value,
                     },
+                },
+            };
+
+        case 'SET_STREAKS':
+            if (!state.user) return state;
+            return {
+                ...state,
+                user: {
+                    ...state.user,
+                    streaks: action.payload,
                 },
             };
 
@@ -305,6 +315,7 @@ interface AppContextType {
     state: AppState;
     dispatch: React.Dispatch<AppAction>;
     addXP: (amount: number) => void;
+    updateStreaks: (category: 'financial' | 'health' | 'mindfulness') => void;
     saveState: () => Promise<void>;
     resetData: () => Promise<void>;
     updateSettings: (settings: Partial<AppSettings>) => Promise<void>;
@@ -442,6 +453,36 @@ export function AppProvider({ children }: { children: ReactNode }) {
         dispatch({ type: 'ADD_XP', payload: amount });
     };
 
+    const updateStreaks = useCallback((category: 'financial' | 'health' | 'mindfulness') => {
+        if (!state.user) return;
+
+        const today = format(new Date(), 'yyyy-MM-dd');
+        const yesterday = format(subDays(new Date(), 1), 'yyyy-MM-dd');
+        const { streaks } = state.user;
+
+        let newCategoryValue: number;
+        if (!streaks.lastActivityDate || streaks.lastActivityDate < yesterday) {
+            newCategoryValue = 1;
+        } else if (streaks.lastActivityDate === yesterday) {
+            newCategoryValue = streaks[category] + 1;
+        } else {
+            newCategoryValue = Math.max(streaks[category], 1);
+        }
+
+        const newStreaks: Streaks = {
+            ...streaks,
+            [category]: newCategoryValue,
+            lastActivityDate: today,
+        };
+
+        const catValues = [newStreaks.financial, newStreaks.health, newStreaks.mindfulness];
+        newStreaks.overall = state.settings.streakMode === 'all'
+            ? Math.min(...catValues)
+            : Math.max(...catValues);
+
+        dispatch({ type: 'SET_STREAKS', payload: newStreaks });
+    }, [state.user, state.settings.streakMode]);
+
     // Update settings and save immediately
     const updateSettings = useCallback(async (newSettings: Partial<AppSettings>) => {
         dispatch({ type: 'UPDATE_SETTINGS', payload: newSettings });
@@ -456,7 +497,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }, []);
 
     return (
-        <AppContext.Provider value={{ state, dispatch, addXP, saveState, resetData, updateSettings }}>
+        <AppContext.Provider value={{ state, dispatch, addXP, updateStreaks, saveState, resetData, updateSettings }}>
             {children}
         </AppContext.Provider>
     );

@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Spacing, FontSize, FontWeight, BorderRadius } from '../constants/theme';
+import { Spacing, FontSize, FontWeight } from '../constants/theme';
 import { useApp, calculateLevel } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
 import { Card, StreakCalendar } from '../components';
@@ -23,7 +23,7 @@ import { SettingsScreen } from './SettingsScreen';
 export function ProfileScreen() {
     const { state, dispatch } = useApp();
     const { colors, styleConfig, isDark } = useTheme();
-    const { user, financial, health, mindfulness } = state;
+    const { user } = state;
 
     const [showSettings, setShowSettings] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
@@ -44,12 +44,6 @@ export function ProfileScreen() {
 
     const levelInfo = calculateLevel(user?.totalXP || 0);
     const memberSince = user?.createdAt ? format(new Date(user.createdAt), 'MMMM yyyy') : 'Today';
-
-    // Stats
-    const totalExpenses = financial.expenses.length;
-    const totalWorkouts = health.workouts.length;
-    const totalMeditations = mindfulness.meditations.length;
-    const totalJournals = mindfulness.journals.length;
 
     const handleSaveName = () => {
         if (!newName.trim()) return;
@@ -120,44 +114,11 @@ export function ProfileScreen() {
                     </View>
                 </Card>
 
-                {/* Streak Card */}
-                <Card style={styles.streakCard}>
-                    <View style={styles.streakRow}>
-                        <View style={[styles.streakIcon, { backgroundColor: colors.streak + '20' }]}>
-                            <Text style={styles.streakEmoji}>🔥</Text>
-                        </View>
-                        <View style={styles.streakInfo}>
-                            <Text style={[styles.streakLabel, { color: colors.textSecondary }]}>Current Streak</Text>
-                            <Text style={[styles.streakValue, { color: colors.streak }]}>{user?.streaks.overall || 0} days</Text>
-                        </View>
-                    </View>
-                </Card>
-
                 {/* Activity Visualizer */}
                 <View style={styles.section}>
                     <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Activity Timeline</Text>
                     <Card>
-                        <StreakCalendar weeks={52} />
-                    </Card>
-                </View>
-
-                {/* Stats Grid */}
-                <View style={styles.statsGrid}>
-                    <Card style={styles.statCard}>
-                        <Text style={[styles.statValue, { color: colors.financial }]}>{totalExpenses}</Text>
-                        <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Expenses</Text>
-                    </Card>
-                    <Card style={styles.statCard}>
-                        <Text style={[styles.statValue, { color: colors.health }]}>{totalWorkouts}</Text>
-                        <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Workouts</Text>
-                    </Card>
-                    <Card style={styles.statCard}>
-                        <Text style={[styles.statValue, { color: colors.mindfulness }]}>{totalMeditations}</Text>
-                        <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Sessions</Text>
-                    </Card>
-                    <Card style={styles.statCard}>
-                        <Text style={[styles.statValue, { color: colors.primary }]}>{totalJournals}</Text>
-                        <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Journals</Text>
+                        <StreakCalendar />
                     </Card>
                 </View>
 
@@ -319,33 +280,6 @@ const styles = StyleSheet.create({
         marginTop: Spacing.xs,
         textAlign: 'center',
     },
-    streakCard: {
-        marginTop: Spacing.md,
-    },
-    streakRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    streakIcon: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    streakEmoji: {
-        fontSize: 24,
-    },
-    streakInfo: {
-        marginLeft: Spacing.md,
-    },
-    streakLabel: {
-        fontSize: FontSize.sm,
-    },
-    streakValue: {
-        fontSize: FontSize.xl,
-        fontWeight: FontWeight.bold,
-    },
     section: {
         marginTop: Spacing.lg,
     },
@@ -354,39 +288,6 @@ const styles = StyleSheet.create({
         fontWeight: FontWeight.semibold,
         marginBottom: Spacing.md,
         paddingHorizontal: Spacing.md,
-    },
-    statsGrid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        marginTop: Spacing.md,
-        marginHorizontal: -Spacing.xs,
-    },
-    statCard: {
-        width: '48%',
-        margin: '1%',
-        alignItems: 'center',
-        paddingVertical: Spacing.md,
-    },
-    statValue: {
-        fontSize: FontSize.xxl,
-        fontWeight: FontWeight.bold,
-    },
-    statLabel: {
-        fontSize: FontSize.xs,
-        marginTop: Spacing.xs,
-    },
-    section: {
-        marginTop: Spacing.xl,
-    },
-    sectionHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: Spacing.md,
-    },
-    sectionTitle: {
-        fontSize: FontSize.md,
-        fontWeight: FontWeight.semibold,
     },
     bottomPadding: {
         height: 100,

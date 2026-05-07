@@ -47,6 +47,7 @@ export function MainNavigator() {
         <Tab.Navigator
             screenOptions={({ route }) => ({
                 headerShown: false,
+                animation: 'shift',
                 tabBarStyle: {
                     backgroundColor: colors.surface,
                     borderTopWidth: styleConfig.borderWidth,
