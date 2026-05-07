@@ -169,6 +169,7 @@ export type AppAction =
     | { type: 'SET_USER'; payload: User }
     | { type: 'ADD_XP'; payload: number }
     | { type: 'UPDATE_STREAK'; payload: { category: keyof Streaks; value: number } }
+    | { type: 'SET_STREAKS'; payload: Streaks }
     | { type: 'SET_LOADING'; payload: boolean }
     // Financial actions
     | { type: 'ADD_EXPENSE'; payload: Expense }
