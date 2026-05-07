@@ -24,7 +24,7 @@ import * as Database from '../lib/database';
 import { format } from 'date-fns';
 
 export function MindfulnessScreen() {
-    const { state, dispatch, addXP } = useApp();
+    const { state, dispatch, addXP, updateStreaks } = useApp();
     const { colors, styleConfig } = useTheme();
     const { mindfulness } = state;
     const isDark = state.settings.theme === 'dark';
@@ -100,6 +100,7 @@ export function MindfulnessScreen() {
         // Then update state
         dispatch({ type: 'ADD_MEDITATION', payload: meditation });
         addXP(XP_CONFIG.rewards.completeMeditation);
+        updateStreaks('mindfulness');
         setShowMeditationModal(false);
     };
 
@@ -120,6 +121,7 @@ export function MindfulnessScreen() {
         // Then update state
         dispatch({ type: 'ADD_JOURNAL', payload: journal });
         addXP(XP_CONFIG.rewards.journalEntry);
+        updateStreaks('mindfulness');
         setJournalContent('');
         setShowJournalModal(false);
     };
@@ -139,6 +141,7 @@ export function MindfulnessScreen() {
         // Then update state
         dispatch({ type: 'ADD_MOOD', payload: mood });
         addXP(XP_CONFIG.rewards.moodCheckIn);
+        updateStreaks('mindfulness');
         setMoodNotes('');
         setShowMoodModal(false);
     };
@@ -160,6 +163,7 @@ export function MindfulnessScreen() {
         // Then update state
         dispatch({ type: 'ADD_GRATITUDE', payload: gratitude });
         addXP(XP_CONFIG.rewards.gratitudeLog);
+        updateStreaks('mindfulness');
         setGratitudeItems(['', '', '']);
         setShowGratitudeModal(false);
     };
@@ -177,12 +181,7 @@ export function MindfulnessScreen() {
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'left', 'right']}>
             <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
-            <KeyboardAvoidingView 
-                style={{ flex: 1 }} 
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
-            >
-                <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+            <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
                 {/* Header */}
                 <View style={styles.header}>
                     <Text style={[styles.title, { color: colors.textPrimary }]}>Mindfulness</Text>
@@ -318,7 +317,6 @@ export function MindfulnessScreen() {
 
                 <View style={styles.bottomPadding} />
             </ScrollView>
-            </KeyboardAvoidingView>
 
             {/* Meditation Modal */}
             <Modal

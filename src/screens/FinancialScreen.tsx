@@ -23,7 +23,7 @@ import { format, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import * as Database from '../lib/database';
 
 export function FinancialScreen() {
-    const { state, dispatch, addXP } = useApp();
+    const { state, dispatch, addXP, updateStreaks } = useApp();
     const { colors, styleConfig } = useTheme();
     const { financial } = state;
     const isDark = state.settings.theme === 'dark';
@@ -69,6 +69,7 @@ export function FinancialScreen() {
         // Then update state
         dispatch({ type: 'ADD_EXPENSE', payload: newExpense });
         addXP(XP_CONFIG.rewards.logExpense);
+        updateStreaks('financial');
 
         setAmount('');
         setDescription('');
@@ -80,12 +81,7 @@ export function FinancialScreen() {
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'left', 'right']}>
             <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
-            <KeyboardAvoidingView 
-                style={{ flex: 1 }} 
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
-            >
-                <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+            <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
                 {/* Header */}
                 <View style={styles.header}>
                     <Text style={[styles.title, { color: colors.textPrimary }]}>Financial</Text>
@@ -192,7 +188,6 @@ export function FinancialScreen() {
 
                 <View style={styles.bottomPadding} />
             </ScrollView>
-            </KeyboardAvoidingView>
 
             {/* Add Expense Modal */}
             <Modal

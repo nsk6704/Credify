@@ -25,7 +25,7 @@ import { format, parseISO } from 'date-fns';
 import * as Database from '../lib/database';
 
 export function HealthScreen() {
-    const { state, dispatch, addXP } = useApp();
+    const { state, dispatch, addXP, updateStreaks } = useApp();
     const { colors, styleConfig } = useTheme();
     const { health } = state;
     const isDark = state.settings.theme === 'dark';
@@ -102,6 +102,7 @@ export function HealthScreen() {
         // Then update state
         dispatch({ type: 'LOG_WATER', payload: waterLog });
         addXP(XP_CONFIG.rewards.logWater);
+        updateStreaks('health');
     };
 
     const handleAddWorkout = async () => {
@@ -122,6 +123,7 @@ export function HealthScreen() {
         // Then update state
         dispatch({ type: 'ADD_WORKOUT', payload: workout });
         addXP(XP_CONFIG.rewards.completeWorkout);
+        updateStreaks('health');
 
         setWorkoutDuration('30');
         setWorkoutNotes('');
@@ -336,12 +338,7 @@ export function HealthScreen() {
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'left', 'right']}>
             <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
-            <KeyboardAvoidingView 
-                style={{ flex: 1 }} 
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
-            >
-                <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+            <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
                 {/* Header */}
                 <View style={styles.header}>
                     <Text style={[styles.title, { color: colors.textPrimary }]}>Health</Text>
@@ -648,7 +645,6 @@ export function HealthScreen() {
 
                 <View style={styles.bottomPadding} />
             </ScrollView>
-            </KeyboardAvoidingView>
 
             {/* Edit Weight Modal */}
             <Modal
