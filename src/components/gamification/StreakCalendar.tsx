@@ -1,9 +1,9 @@
-import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal } from 'react-native';
+import React, { useState, useMemo, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
 import { useApp } from '../../context/AppContext';
 import { Spacing, FontSize, FontWeight } from '../../constants/theme';
-import { format, subDays, startOfWeek, addDays, parseISO, isToday } from 'date-fns';
+import { format, startOfMonth, startOfWeek, addDays, parseISO, isToday, getMonth, getDate, getYear, subMonths, addMonths, subDays } from 'date-fns';
 
 interface DayActivity {
     date: string;
@@ -15,303 +15,196 @@ interface DayActivity {
     water: number;
 }
 
-interface StreakCalendarProps {
-    weeks?: number; // Number of weeks to display (default: 52)
+interface CalendarCell {
+    date: Date;
+    dateStr: string;
+    day: number;
+    isCurrentMonth: boolean;
+    isFuture: boolean;
+    isToday: boolean;
+    activity: DayActivity | null;
 }
 
-export function StreakCalendar({ weeks = 52 }: StreakCalendarProps) {
+
+export function StreakCalendar() {
     const { colors, styleConfig } = useTheme();
     const { state } = useApp();
     const [selectedDay, setSelectedDay] = useState<DayActivity | null>(null);
     const [showDetails, setShowDetails] = useState(false);
+    const [today, setToday] = useState(() => new Date());
+    const [currentMonth, setCurrentMonth] = useState(() => new Date());
 
-    // Aggregate all activities by date
+    useEffect(() => {
+        const id = setInterval(() => setToday(new Date()), 60000);
+        return () => clearInterval(id);
+    }, []);
+
     const activityByDate = useMemo(() => {
         const activities: Record<string, DayActivity> = {};
 
-        // Helper to ensure date entry exists
         const ensureDate = (dateStr: string) => {
             if (!activities[dateStr]) {
-                activities[dateStr] = {
-                    date: dateStr,
-                    count: 0,
-                    expenses: 0,
-                    workouts: 0,
-                    meditations: 0,
-                    journals: 0,
-                    water: 0,
-                };
+                activities[dateStr] = { date: dateStr, count: 0, expenses: 0, workouts: 0, meditations: 0, journals: 0, water: 0 };
             }
         };
 
-        // Count expenses
-        state.financial.expenses.forEach(expense => {
-            ensureDate(expense.date);
-            activities[expense.date].expenses += 1;
-            activities[expense.date].count += 1;
-        });
-
-        // Count workouts
-        state.health.workouts.forEach(workout => {
-            ensureDate(workout.date);
-            activities[workout.date].workouts += 1;
-            activities[workout.date].count += 1;
-        });
-
-        // Count water logs
-        state.health.waterLogs.forEach(waterLog => {
-            ensureDate(waterLog.date);
-            activities[waterLog.date].water = waterLog.glasses;
-            if (waterLog.glasses > 0) {
-                activities[waterLog.date].count += 1;
-            }
-        });
-
-        // Count meditations
-        state.mindfulness.meditations.forEach(meditation => {
-            ensureDate(meditation.date);
-            activities[meditation.date].meditations += 1;
-            activities[meditation.date].count += 1;
-        });
-
-        // Count journals
-        state.mindfulness.journals.forEach(journal => {
-            ensureDate(journal.date);
-            activities[journal.date].journals += 1;
-            activities[journal.date].count += 1;
-        });
+        state.financial.expenses.forEach(e => { ensureDate(e.date); activities[e.date].expenses += 1; activities[e.date].count += 1; });
+        state.health.workouts.forEach(w => { ensureDate(w.date); activities[w.date].workouts += 1; activities[w.date].count += 1; });
+        state.health.waterLogs.forEach(wl => { ensureDate(wl.date); activities[wl.date].water = wl.glasses; if (wl.glasses > 0) activities[wl.date].count += 1; });
+        state.mindfulness.meditations.forEach(m => { ensureDate(m.date); activities[m.date].meditations += 1; activities[m.date].count += 1; });
+        state.mindfulness.journals.forEach(j => { ensureDate(j.date); activities[j.date].journals += 1; activities[j.date].count += 1; });
 
         return activities;
     }, [state]);
 
-    // Calculate streak statistics
-    const streakStats = useMemo(() => {
-        const today = format(new Date(), 'yyyy-MM-dd');
+    const currentStreak = useMemo(() => {
+        const todayStr = format(today, 'yyyy-MM-dd');
+        let streak = 0, checkDate = today, daysChecked = 0;
+        while (daysChecked < 365) {
+            const ds = format(checkDate, 'yyyy-MM-dd');
+            if (activityByDate[ds] && activityByDate[ds].count > 0) { streak++; checkDate = subDays(checkDate, 1); daysChecked++; }
+            else if (ds === todayStr) { checkDate = subDays(checkDate, 1); daysChecked++; }
+            else break;
+        }
+        return streak;
+    }, [activityByDate, today]);
+
+    const longestStreak = useMemo(() => {
         const dates = Object.keys(activityByDate).sort();
-        
-        let currentStreak = 0;
-        let longestStreak = 0;
-
-        // Count backwards from today for current streak
-        let checkDate = new Date();
-        let daysChecked = 0;
-        const maxDaysToCheck = 365; // Safety limit
-        
-        while (daysChecked < maxDaysToCheck) {
-            const dateStr = format(checkDate, 'yyyy-MM-dd');
-            if (activityByDate[dateStr] && activityByDate[dateStr].count > 0) {
-                currentStreak++;
-                checkDate = subDays(checkDate, 1);
-                daysChecked++;
-            } else if (dateStr === today) {
-                // Today has no activity, but continue checking
-                checkDate = subDays(checkDate, 1);
-                daysChecked++;
-            } else {
-                break;
-            }
+        if (dates.length === 0) return 0;
+        const firstDate = parseISO(dates[0]);
+        const lastDate = parseISO(dates[dates.length - 1]);
+        const totalDays = Math.ceil((lastDate.getTime() - firstDate.getTime()) / 86400000) + 1;
+        let temp = 0, best = 0, cd = firstDate;
+        for (let i = 0; i < totalDays; i++) {
+            const ds = format(cd, 'yyyy-MM-dd');
+            if (activityByDate[ds] && activityByDate[ds].count > 0) { temp++; best = Math.max(best, temp); } else temp = 0;
+            cd = addDays(cd, 1);
         }
-
-        // Calculate longest streak by checking all days sequentially
-        if (dates.length > 0) {
-            const firstDate = parseISO(dates[0]);
-            const lastDate = parseISO(dates[dates.length - 1]);
-            const totalDays = Math.ceil((lastDate.getTime() - firstDate.getTime()) / 86400000) + 1;
-            
-            let tempStreak = 0;
-            let checkStreakDate = firstDate;
-            
-            for (let i = 0; i < totalDays; i++) {
-                const dateStr = format(checkStreakDate, 'yyyy-MM-dd');
-                
-                if (activityByDate[dateStr] && activityByDate[dateStr].count > 0) {
-                    tempStreak++;
-                    longestStreak = Math.max(longestStreak, tempStreak);
-                } else {
-                    tempStreak = 0;
-                }
-                
-                checkStreakDate = addDays(checkStreakDate, 1);
-            }
-        }
-
-        return {
-            currentStreak,
-            longestStreak,
-            totalActiveDays: dates.length,
-        };
+        return best;
     }, [activityByDate]);
 
-    // Generate calendar data
-    const calendarData = useMemo(() => {
-        const endDate = new Date();
-        const startDate = subDays(endDate, weeks * 7 - 1);
-        const firstDay = startOfWeek(startDate, { weekStartsOn: 0 }); // Sunday
-
-        const weekData: DayActivity[][] = [];
-        let currentWeek: DayActivity[] = [];
-
-        for (let i = 0; i < weeks * 7; i++) {
-            const date = addDays(firstDay, i);
+    const calendarWeeks = useMemo(() => {
+        const monthStart = startOfMonth(currentMonth);
+        const calStart = startOfWeek(monthStart, { weekStartsOn: 0 });
+        const month = getMonth(currentMonth);
+        const cells: CalendarCell[] = [];
+        for (let i = 0; i < 42; i++) {
+            const date = addDays(calStart, i);
             const dateStr = format(date, 'yyyy-MM-dd');
-            const activity = activityByDate[dateStr] || {
-                date: dateStr,
-                count: 0,
-                expenses: 0,
-                workouts: 0,
-                meditations: 0,
-                journals: 0,
-                water: 0,
-            };
-
-            currentWeek.push(activity);
-
-            if (currentWeek.length === 7) {
-                weekData.push(currentWeek);
-                currentWeek = [];
-            }
+            const act = activityByDate[dateStr];
+            cells.push({
+                date, dateStr, day: getDate(date),
+                isCurrentMonth: getMonth(date) === month,
+                isFuture: date > today,
+                isToday: isToday(date),
+                activity: act && act.count > 0 ? act : null,
+            });
         }
+        const weeks: CalendarCell[][] = [];
+        for (let i = 0; i < 42; i += 7) weeks.push(cells.slice(i, i + 7));
+        return weeks;
+    }, [currentMonth, activityByDate, today]);
 
-        return weekData;
-    }, [activityByDate, weeks]);
+    const activeDaysInMonth = useMemo(() => {
+        return calendarWeeks.reduce((s, w) => s + w.filter(c => c.isCurrentMonth && c.activity && !c.isFuture).length, 0);
+    }, [calendarWeeks]);
 
-    // Get color intensity based on activity count
-    const getIntensityColor = (count: number): string => {
-        if (count === 0) return colors.surfaceLight;
-        if (count <= 2) return colors.streak + '30'; // 30% opacity
-        if (count <= 5) return colors.streak + '60'; // 60% opacity
-        if (count <= 10) return colors.streak + '90'; // 90% opacity
-        return colors.streak; // Full intensity
-    };
+    const totalDaysInMonth = calendarWeeks.reduce((s, w) => s + w.filter(c => c.isCurrentMonth).length, 0);
+    const atCurrentMonth = getMonth(currentMonth) === getMonth(today) && getYear(currentMonth) === getYear(today);
 
-    const handleDayPress = (day: DayActivity) => {
-        setSelectedDay(day);
+    const handleDayPress = (cell: CalendarCell) => {
+        if (cell.isFuture) return;
+        const da = cell.activity || { date: cell.dateStr, count: 0, expenses: 0, workouts: 0, meditations: 0, journals: 0, water: 0 };
+        setSelectedDay(da);
         setShowDetails(true);
     };
 
-    const dayNames = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+    const dayHeaders = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
     return (
         <View style={styles.container}>
-            {/* Stats Header */}
             <View style={styles.statsContainer}>
                 <View style={styles.statItem}>
-                    <Text style={[styles.statValue, { color: colors.streak }]}>
-                        {streakStats.currentStreak}
-                    </Text>
-                    <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-                        Current Streak
-                    </Text>
+                    <Text style={[styles.statValue, { color: colors.success }]}>{currentStreak}</Text>
+                    <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Current Streak</Text>
                 </View>
                 <View style={styles.statItem}>
-                    <Text style={[styles.statValue, { color: colors.primary }]}>
-                        {streakStats.longestStreak}
-                    </Text>
-                    <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-                        Longest Streak
-                    </Text>
+                    <Text style={[styles.statValue, { color: colors.primary }]}>{longestStreak}</Text>
+                    <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Best Streak</Text>
                 </View>
                 <View style={styles.statItem}>
                     <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-                        {streakStats.totalActiveDays}
+                        {activeDaysInMonth}<Text style={[styles.statValueSub, { color: colors.textMuted }]}>/{totalDaysInMonth}</Text>
                     </Text>
-                    <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-                        Active Days
-                    </Text>
+                    <Text style={[styles.statLabel, { color: colors.textSecondary }]}>This Month</Text>
                 </View>
             </View>
 
-            {/* Calendar Grid */}
-            <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.scrollContent}
-            >
-                <View>
-                    {/* Day labels */}
-                    <View style={styles.dayLabelsContainer}>
-                        <View style={styles.dayLabels}>
-                            {dayNames.map((day, index) => (
-                                <Text
-                                    key={index}
-                                    style={[styles.dayLabel, { color: colors.textMuted }]}
-                                >
-                                    {day}
-                                </Text>
-                            ))}
-                        </View>
-                    </View>
-
-                    {/* Calendar weeks */}
-                    <View style={styles.calendarContainer}>
-                        {calendarData.map((week, weekIndex) => (
-                            <View key={weekIndex} style={styles.week}>
-                                {week.map((day) => {
-                                    const isTodayDate = isToday(parseISO(day.date));
-                                    return (
-                                        <TouchableOpacity
-                                            key={day.date}
-                                            onPress={() => handleDayPress(day)}
-                                            style={[
-                                                styles.day,
-                                                {
-                                                    backgroundColor: getIntensityColor(day.count),
-                                                    borderColor: isTodayDate ? colors.primary : 'transparent',
-                                                    borderRadius: styleConfig.borderRadius.xs,
-                                                },
-                                            ]}
-                                            accessibilityLabel={`${format(parseISO(day.date), 'EEEE, MMMM d, yyyy')}: ${day.count} ${day.count === 1 ? 'activity' : 'activities'}`}
-                                            accessibilityHint="Double tap to view details"
-                                        />
-                                    );
-                                })}
-                            </View>
-                        ))}
-                    </View>
-
-                    {/* Legend */}
-                    <View style={styles.legend}>
-                        <Text style={[styles.legendLabel, { color: colors.textMuted }]}>Less</Text>
-                        <View style={styles.legendBoxes}>
-                            <View style={[styles.legendBox, { backgroundColor: colors.surfaceLight, borderRadius: styleConfig.borderRadius.xs }]} />
-                            <View style={[styles.legendBox, { backgroundColor: colors.streak + '30', borderRadius: styleConfig.borderRadius.xs }]} />
-                            <View style={[styles.legendBox, { backgroundColor: colors.streak + '60', borderRadius: styleConfig.borderRadius.xs }]} />
-                            <View style={[styles.legendBox, { backgroundColor: colors.streak + '90', borderRadius: styleConfig.borderRadius.xs }]} />
-                            <View style={[styles.legendBox, { backgroundColor: colors.streak, borderRadius: styleConfig.borderRadius.xs }]} />
-                        </View>
-                        <Text style={[styles.legendLabel, { color: colors.textMuted }]}>More</Text>
-                    </View>
-                </View>
-            </ScrollView>
-
-            {/* Details Modal */}
-            <Modal
-                visible={showDetails}
-                animationType="fade"
-                transparent
-                onRequestClose={() => setShowDetails(false)}
-            >
+            <View style={styles.monthNav}>
+                <TouchableOpacity onPress={() => setCurrentMonth(subMonths(currentMonth, 1))} style={styles.navButton}>
+                    <Text style={[styles.navArrow, { color: colors.textSecondary }]}>{'<'}</Text>
+                </TouchableOpacity>
+                <Text style={[styles.monthTitle, { color: colors.textPrimary }]}>{format(currentMonth, 'MMMM yyyy')}</Text>
                 <TouchableOpacity
-                    style={styles.modalOverlay}
-                    activeOpacity={1}
-                    onPress={() => setShowDetails(false)}
+                    onPress={() => setCurrentMonth(addMonths(currentMonth, 1))}
+                    style={styles.navButton}
+                    disabled={atCurrentMonth}
                 >
-                    <View
-                        style={[
-                            styles.modalContent,
-                            {
-                                backgroundColor: colors.surface,
-                                borderRadius: styleConfig.borderRadius.lg,
-                                borderColor: colors.border,
-                            },
-                        ]}
-                    >
+                    <Text style={[styles.navArrow, { color: atCurrentMonth ? colors.textMuted : colors.textSecondary }]}>{'>'}</Text>
+                </TouchableOpacity>
+            </View>
+
+            <View style={styles.calendarWrap}>
+                <View style={styles.dayHeadersRow}>
+                    {dayHeaders.map((d, i) => (
+                        <View key={i} style={styles.dayHeaderCell}>
+                            <Text style={[styles.dayHeaderText, { color: colors.textMuted }]}>{d}</Text>
+                        </View>
+                    ))}
+                </View>
+
+                {calendarWeeks.map((week, wi) => (
+                    <View key={wi} style={styles.weekRow}>
+                        {week.map((cell) => {
+                            const isDim = !cell.isCurrentMonth || cell.isFuture;
+                            return (
+                                <TouchableOpacity
+                                    key={cell.dateStr}
+                                    onPress={() => handleDayPress(cell)}
+                                    activeOpacity={isDim ? 1 : 0.2}
+                                    style={[
+                                        styles.dayCell,
+                                        {
+                                            backgroundColor: cell.isToday ? colors.primary + '15' : 'transparent',
+                                            borderColor: cell.isToday ? colors.primary : 'transparent',
+                                            borderRadius: styleConfig.borderRadius.sm,
+                                            opacity: isDim ? 0.3 : 1,
+                                        },
+                                    ]}
+                                >
+                                    <Text style={[styles.dayNum, { color: cell.isToday ? colors.primary : colors.textPrimary }]}>
+                                        {cell.day}
+                                    </Text>
+                                    {cell.activity && !cell.isFuture && (
+                                        <View style={[styles.dot, { backgroundColor: colors.success }]} />
+                                    )}
+                                </TouchableOpacity>
+                            );
+                        })}
+                    </View>
+                ))}
+            </View>
+
+            <Modal visible={showDetails} animationType="fade" transparent onRequestClose={() => setShowDetails(false)}>
+                <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setShowDetails(false)}>
+                    <View style={[styles.modalContent, { backgroundColor: colors.surface, borderRadius: styleConfig.borderRadius.lg, borderColor: colors.border }]}>
                         {selectedDay && (
                             <>
                                 <Text style={[styles.modalDate, { color: colors.textPrimary }]}>
                                     {format(parseISO(selectedDay.date), 'EEEE, MMMM d, yyyy')}
                                 </Text>
-                                <Text style={[styles.modalTotal, { color: colors.streak }]}>
+<Text style={[styles.modalTotal, { color: colors.success }]}>
                                     {selectedDay.count} {selectedDay.count === 1 ? 'activity' : 'activities'}
                                 </Text>
                                 {selectedDay.count > 0 && (
@@ -368,107 +261,30 @@ export function StreakCalendar({ weeks = 52 }: StreakCalendarProps) {
 }
 
 const styles = StyleSheet.create({
-    container: {
-        paddingVertical: Spacing.md,
-    },
-    statsContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-        marginBottom: Spacing.lg,
-    },
-    statItem: {
-        alignItems: 'center',
-    },
-    statValue: {
-        fontSize: FontSize.xl,
-        fontWeight: FontWeight.bold,
-    },
-    statLabel: {
-        fontSize: FontSize.xs,
-        marginTop: Spacing.xs,
-    },
-    scrollContent: {
-        paddingRight: Spacing.md,
-    },
-    dayLabelsContainer: {
-        marginBottom: Spacing.xs,
-    },
-    dayLabels: {
-        marginLeft: 20,
-    },
-    dayLabel: {
-        fontSize: FontSize.xs,
-        height: 12,
-        lineHeight: 12,
-        textAlign: 'center',
-    },
-    calendarContainer: {
-        flexDirection: 'row',
-    },
-    week: {
-        marginRight: 3,
-    },
-    day: {
-        width: 12,
-        height: 12,
-        marginBottom: 3,
-        borderWidth: 1,
-    },
-    legend: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginTop: Spacing.md,
-        justifyContent: 'center',
-    },
-    legendLabel: {
-        fontSize: FontSize.xs,
-        marginHorizontal: Spacing.xs,
-    },
-    legendBoxes: {
-        flexDirection: 'row',
-        gap: 3,
-    },
-    legendBox: {
-        width: 12,
-        height: 12,
-    },
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.6)',
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: Spacing.lg,
-    },
-    modalContent: {
-        padding: Spacing.lg,
-        minWidth: 280,
-        maxWidth: 340,
-        borderWidth: 1,
-    },
-    modalDate: {
-        fontSize: FontSize.md,
-        fontWeight: FontWeight.semibold,
-        marginBottom: Spacing.sm,
-    },
-    modalTotal: {
-        fontSize: FontSize.lg,
-        fontWeight: FontWeight.bold,
-        marginBottom: Spacing.md,
-    },
-    modalDetails: {
-        gap: Spacing.sm,
-    },
-    modalDetailRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    modalDetailDot: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-        marginRight: Spacing.sm,
-    },
-    modalDetailText: {
-        fontSize: FontSize.sm,
-    },
+    container: { paddingVertical: Spacing.md },
+    statsContainer: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: Spacing.md },
+    statItem: { alignItems: 'center' },
+    statValue: { fontSize: FontSize.xl, fontWeight: FontWeight.bold },
+    statValueSub: { fontSize: FontSize.sm, fontWeight: FontWeight.regular },
+    statLabel: { fontSize: FontSize.xs, marginTop: Spacing.xs },
+    monthNav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: Spacing.md, paddingHorizontal: Spacing.xs },
+    navButton: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
+    navArrow: { fontSize: FontSize.lg, fontWeight: FontWeight.bold },
+    monthTitle: { fontSize: FontSize.md, fontWeight: FontWeight.semibold },
+    calendarWrap: {},
+    dayHeadersRow: { flexDirection: 'row', marginBottom: 4, paddingHorizontal: 2 },
+    dayHeaderCell: { flex: 1, alignItems: 'center' },
+    dayHeaderText: { fontSize: FontSize.xs },
+    weekRow: { flexDirection: 'row', marginBottom: 2, paddingHorizontal: 2 },
+    dayCell: { flex: 1, aspectRatio: 1, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, marginHorizontal: 1 },
+    dayNum: { fontSize: FontSize.sm, fontWeight: FontWeight.medium },
+    dot: { width: 5, height: 5, borderRadius: 3, position: 'absolute', bottom: 3 },
+    modalOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.6)', justifyContent: 'center', alignItems: 'center', padding: Spacing.lg },
+    modalContent: { padding: Spacing.lg, minWidth: 280, maxWidth: 340, borderWidth: 1 },
+    modalDate: { fontSize: FontSize.md, fontWeight: FontWeight.semibold, marginBottom: Spacing.sm },
+    modalTotal: { fontSize: FontSize.lg, fontWeight: FontWeight.bold, marginBottom: Spacing.md },
+    modalDetails: { gap: Spacing.sm },
+    modalDetailRow: { flexDirection: 'row', alignItems: 'center' },
+    modalDetailDot: { width: 8, height: 8, borderRadius: 4, marginRight: Spacing.sm },
+    modalDetailText: { fontSize: FontSize.sm },
 });
