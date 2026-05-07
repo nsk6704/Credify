@@ -545,7 +545,7 @@ export async function loadAppState(): Promise<Partial<AppState>> {
         const weightUnit = await getSetting('weightUnit');
     
         // Normalize streak mode to the expected type ('all' | 'any')
-        const normalizedStreakMode = (streakMode === 'all' || streakMode === 'any') ? (streakMode as 'all' | 'any') : 'all';
+        const normalizedStreakMode = (streakMode === 'all' || streakMode === 'any') ? (streakMode as 'all' | 'any') : 'any';
     
         return {
             user,
