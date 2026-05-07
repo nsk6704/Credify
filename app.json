@@ -2,7 +2,7 @@
   "expo": {
     "name": "UpWell",
     "slug": "upwell",
-    "version": "1.0.0",
+    "version": "0.1.1",
     "orientation": "portrait",
     "icon": "./assets/main-icon.png",
     "userInterfaceStyle": "dark",
@@ -24,16 +24,16 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.upwell.app",
-      "versionCode": 1
+      "versionCode": 2
     },
     "web": {
       "favicon": "./assets/main-icon.png"
     },
+    "owner": "nsk6704",
     "extra": {
       "eas": {
-        "projectId": "0c079cdf-c9b0-4558-b475-090da1bb1e0a"
+        "projectId": "6dc0969f-55af-4a08-910e-6c408ca2bbb2"
       }
-    },
-    "owner": "nsk6704"
+    }
   }
 }
