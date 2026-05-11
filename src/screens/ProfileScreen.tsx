@@ -79,7 +79,7 @@ export function ProfileScreen() {
                 <Card style={styles.profileCard}>
                     <View style={styles.profileHeader}>
                         <View style={[styles.avatarContainer, { backgroundColor: colors.primary, borderRadius: styleConfig.borderRadius.xl }]}>
-                            <Text style={[styles.avatarText, { color: '#FFFFFF' }]}>
+                            <Text style={[styles.avatarText, { color: colors.background }]}>
                                 {(user?.name || 'U').charAt(0).toUpperCase()}
                             </Text>
                         </View>
@@ -96,7 +96,7 @@ export function ProfileScreen() {
                     <View style={[styles.levelSection, { borderTopColor: colors.border }]}>
                         <View style={styles.levelRow}>
                             <View style={[styles.levelBadge, { backgroundColor: colors.primary }]}>
-                                <Text style={[styles.levelNumber, { color: '#FFFFFF' }]}>{levelInfo.level}</Text>
+                                <Text style={[styles.levelNumber, { color: colors.background }]}>{levelInfo.level}</Text>
                             </View>
                             <View style={styles.levelInfo}>
                                 <Text style={[styles.levelTitle, { color: colors.textPrimary }]}>{levelInfo.title}</Text>
@@ -137,7 +137,7 @@ export function ProfileScreen() {
                         <View style={styles.modalHeader}>
                             <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Edit Name</Text>
                             <TouchableOpacity onPress={() => setShowEditModal(false)}>
-                                <Text style={[styles.modalClose, { color: colors.textMuted }]}>✕</Text>
+                                <Ionicons name="close" size={24} color={colors.textMuted} />
                             </TouchableOpacity>
                         </View>
 

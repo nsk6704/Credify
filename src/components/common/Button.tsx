@@ -35,7 +35,7 @@ export function Button({
     textStyle,
     color,
 }: ButtonProps) {
-    const { colors, styleConfig } = useTheme();
+    const { colors, styleConfig, isDark } = useTheme();
     
     const sizeStyles = {
         sm: { paddingVertical: Spacing.sm, paddingHorizontal: Spacing.md },
@@ -82,16 +82,18 @@ export function Button({
             case 'outline':
             case 'ghost':
                 return { ...base, color: color || colors.primary };
-            default:
-                // For primary buttons with custom color, use white text for better contrast
-                return { ...base, color: color ? '#FFFFFF' : colors.textPrimary };
+            default: {
+                const bg = color || colors.primary;
+                const textColor = bg === colors.textPrimary ? colors.background : (isDark ? colors.textPrimary : '#FFFFFF');
+                return { ...base, color: textColor };
+            }
         }
     };
 
     const content = (
         <>
             {loading ? (
-                <ActivityIndicator color={color ? '#FFFFFF' : colors.textPrimary} size="small" />
+                <ActivityIndicator color={colors.textPrimary} size="small" />
             ) : (
                 <>
                     {icon && <Text style={{ marginRight: Spacing.sm }}>{icon}</Text>}

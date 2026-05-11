@@ -19,6 +19,7 @@ const initialSettings: AppSettings = {
     theme: 'dark',
     style: 'modern',
     weightUnit: 'kg',
+    colorScheme: 'premium',
 };
 
 const initialState: AppState = {
@@ -349,6 +350,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
             const savedState = await Database.loadAppState();
             
             if (savedState.user) {
+                const { streaks } = savedState.user;
+                const yesterday = format(subDays(new Date(), 1), 'yyyy-MM-dd');
+
+                if (streaks.lastActivityDate && streaks.lastActivityDate < yesterday) {
+                    savedState.user = {
+                        ...savedState.user,
+                        streaks: {
+                            ...streaks,
+                            financial: 0,
+                            health: 0,
+                            mindfulness: 0,
+                            overall: 0,
+                            lastActivityDate: format(new Date(), 'yyyy-MM-dd'),
+                        },
+                    };
+                }
+
                 dispatch({ type: 'LOAD_STATE', payload: savedState });
             } else {
                 // Create new user for first-time launch
@@ -397,6 +415,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             await Database.saveSetting('style', state.settings.style);
             await Database.saveSetting('streakMode', state.settings.streakMode);
             await Database.saveSetting('weightUnit', state.settings.weightUnit);
+            await Database.saveSetting('colorScheme', state.settings.colorScheme);
         } catch (error) {
             console.error('Failed to save state to SQLite:', error);
         }

@@ -121,8 +121,8 @@ export function HomeScreen() {
                             style={styles.quickAction}
                             onPress={() => navigation.navigate('Financial')}
                         >
-                            <View style={[styles.quickActionIcon, { backgroundColor: colors.financial, borderRadius: styleConfig.borderRadius.md }]}>
-                                <Ionicons name="card-outline" size={22} color="#FFFFFF" />
+                            <View style={[styles.quickActionIcon, { backgroundColor: colors.surfaceLight, borderRadius: styleConfig.borderRadius.md }]}>
+                                <Ionicons name="card-outline" size={22} color={colors.primary} />
                             </View>
                             <Text style={[styles.quickActionLabel, { color: colors.textSecondary }]}>Expense</Text>
                         </TouchableOpacity>
@@ -130,8 +130,8 @@ export function HomeScreen() {
                             style={styles.quickAction}
                             onPress={() => navigation.navigate('Health')}
                         >
-                            <View style={[styles.quickActionIcon, { backgroundColor: colors.health, borderRadius: styleConfig.borderRadius.md }]}>
-                                <Ionicons name="barbell-outline" size={22} color="#FFFFFF" />
+                            <View style={[styles.quickActionIcon, { backgroundColor: colors.surfaceLight, borderRadius: styleConfig.borderRadius.md }]}>
+                                <Ionicons name="barbell-outline" size={22} color={colors.primary} />
                             </View>
                             <Text style={[styles.quickActionLabel, { color: colors.textSecondary }]}>Workout</Text>
                         </TouchableOpacity>
@@ -139,8 +139,8 @@ export function HomeScreen() {
                             style={styles.quickAction}
                             onPress={() => navigation.navigate('Mindfulness')}
                         >
-                            <View style={[styles.quickActionIcon, { backgroundColor: colors.mindfulness, borderRadius: styleConfig.borderRadius.md }]}>
-                                <Ionicons name="flower-outline" size={22} color="#FFFFFF" />
+                            <View style={[styles.quickActionIcon, { backgroundColor: colors.surfaceLight, borderRadius: styleConfig.borderRadius.md }]}>
+                                <Ionicons name="flower-outline" size={22} color={colors.primary} />
                             </View>
                             <Text style={[styles.quickActionLabel, { color: colors.textSecondary }]}>Meditate</Text>
                         </TouchableOpacity>
@@ -148,8 +148,8 @@ export function HomeScreen() {
                             style={styles.quickAction}
                             onPress={() => navigation.navigate('Health')}
                         >
-                            <View style={[styles.quickActionIcon, { backgroundColor: colors.info, borderRadius: styleConfig.borderRadius.md }]}>
-                                <Ionicons name="water-outline" size={22} color="#FFFFFF" />
+                            <View style={[styles.quickActionIcon, { backgroundColor: colors.surfaceLight, borderRadius: styleConfig.borderRadius.md }]}>
+                                <Ionicons name="water-outline" size={22} color={colors.primary} />
                             </View>
                             <Text style={[styles.quickActionLabel, { color: colors.textSecondary }]}>Water</Text>
                         </TouchableOpacity>

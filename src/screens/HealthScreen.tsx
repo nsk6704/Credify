@@ -20,13 +20,14 @@ import { WORKOUT_TYPES, XP_CONFIG } from '../constants/gamification';
 import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
 import { Button, Card } from '../components';
+import { Ionicons } from '@expo/vector-icons';
 import { Workout, WaterLog, WeightLog } from '../types';
 import { format, parseISO } from 'date-fns';
 import * as Database from '../lib/database';
 
 export function HealthScreen() {
     const { state, dispatch, addXP, updateStreaks } = useApp();
-    const { colors, styleConfig } = useTheme();
+    const { colors, styleConfig, colorScheme } = useTheme();
     const { health } = state;
     const isDark = state.settings.theme === 'dark';
     const chartLimit = 14;
@@ -600,7 +601,7 @@ export function HealthScreen() {
                             return (
                                 <View key={workout.id} style={[styles.workoutItem, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: styleConfig.borderRadius.md }]}>
                                     <View style={[styles.workoutIcon, { backgroundColor: (type?.color || colors.health) + '20' }]}>
-                                        <Text style={styles.workoutEmoji}>{type?.icon || '💪'}</Text>
+                                        <Ionicons name={type?.icon || 'fitness'} size={18} color={type?.color || colors.health} />
                                     </View>
                                     <View style={styles.workoutInfo}>
                                         <Text style={[styles.workoutName, { color: colors.textPrimary }]}>{type?.name || 'Workout'}</Text>
@@ -659,7 +660,7 @@ export function HealthScreen() {
                         <View style={styles.modalHeader}>
                             <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Edit Weight</Text>
                             <TouchableOpacity onPress={() => setShowEditModal(false)}>
-                                <Text style={[styles.modalClose, { color: colors.textMuted }]}>✕</Text>
+                                <Ionicons name="close" size={24} color={colors.textMuted} />
                             </TouchableOpacity>
                         </View>
                         <View style={styles.inputGroup}>
@@ -714,7 +715,7 @@ export function HealthScreen() {
                         <View style={styles.modalHeader}>
                             <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Log Workout</Text>
                             <TouchableOpacity onPress={() => setShowWorkoutModal(false)}>
-                                <Text style={[styles.modalClose, { color: colors.textMuted }]}>✕</Text>
+                                <Ionicons name="close" size={24} color={colors.textMuted} />
                             </TouchableOpacity>
                         </View>
 
@@ -729,11 +730,11 @@ export function HealthScreen() {
                                             style={[
                                                 styles.workoutTypeOption,
                                                 { backgroundColor: colors.surfaceLight, borderColor: colors.border, borderRadius: styleConfig.borderRadius.md },
-                                                selectedWorkout.id === type.id && { borderColor: type.color, backgroundColor: type.color + '20' },
+                                                selectedWorkout.id === type.id && { borderColor: colorScheme === 'premium' ? colors.primary : type.color, backgroundColor: colorScheme === 'premium' ? colors.primary + '15' : type.color + '20' },
                                             ]}
                                             onPress={() => setSelectedWorkout(type)}
                                         >
-                                            <Text style={styles.workoutTypeIcon}>{type.icon}</Text>
+                                            <Ionicons name={type.icon} size={22} color={type.color} />
                                             <Text style={[styles.workoutTypeName, { color: colors.textPrimary }]}>{type.name}</Text>
                                         </TouchableOpacity>
                                     ))}

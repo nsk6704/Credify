@@ -225,8 +225,8 @@ export function MindfulnessScreen() {
                             style={[styles.actionCard, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: styleConfig.borderRadius.md }]}
                             onPress={() => setShowMoodModal(true)}
                         >
-                            <View style={[styles.actionIconBg, { backgroundColor: '#EC4899' + '20' }]}>
-                                <Ionicons name="happy-outline" size={24} color="#EC4899" />
+                            <View style={[styles.actionIconBg, { backgroundColor: colors.primary + '15' }]}>
+                                <Ionicons name="happy-outline" size={24} color={colors.primary} />
                             </View>
                             <Text style={[styles.actionTitle, { color: colors.textPrimary }]}>Mood Check</Text>
                             <Text style={[styles.actionXP, { color: colors.xp }]}>+5 XP</Text>
@@ -236,8 +236,8 @@ export function MindfulnessScreen() {
                             style={[styles.actionCard, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: styleConfig.borderRadius.md }]}
                             onPress={() => setShowJournalModal(true)}
                         >
-                            <View style={[styles.actionIconBg, { backgroundColor: '#8B5CF6' + '20' }]}>
-                                <Ionicons name="journal-outline" size={24} color="#8B5CF6" />
+                            <View style={[styles.actionIconBg, { backgroundColor: colors.primary + '15' }]}>
+                                <Ionicons name="journal-outline" size={24} color={colors.primary} />
                             </View>
                             <Text style={[styles.actionTitle, { color: colors.textPrimary }]}>Journal</Text>
                             <Text style={[styles.actionXP, { color: colors.xp }]}>+10 XP</Text>
@@ -247,8 +247,8 @@ export function MindfulnessScreen() {
                             style={[styles.actionCard, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: styleConfig.borderRadius.md }]}
                             onPress={() => setShowGratitudeModal(true)}
                         >
-                            <View style={[styles.actionIconBg, { backgroundColor: '#F59E0B' + '20' }]}>
-                                <Ionicons name="heart-outline" size={24} color="#F59E0B" />
+                            <View style={[styles.actionIconBg, { backgroundColor: colors.primary + '15' }]}>
+                                <Ionicons name="heart-outline" size={24} color={colors.primary} />
                             </View>
                             <Text style={[styles.actionTitle, { color: colors.textPrimary }]}>Gratitude</Text>
                             <Text style={[styles.actionXP, { color: colors.xp }]}>+5 XP</Text>
@@ -349,7 +349,7 @@ export function MindfulnessScreen() {
                                                 style={[
                                                     styles.timerOptionText,
                                                     { color: colors.textSecondary },
-                                                    meditationTime === mins && { color: '#FFFFFF' },
+                                                    meditationTime === mins && { color: colors.background },
                                                 ]}
                                             >
                                                 {mins}m
@@ -412,7 +412,7 @@ export function MindfulnessScreen() {
                         <View style={styles.modalHeader}>
                             <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>How are you feeling?</Text>
                             <TouchableOpacity onPress={() => setShowMoodModal(false)}>
-                                <Text style={[styles.modalClose, { color: colors.textMuted }]}>✕</Text>
+                                <Ionicons name="close" size={24} color={colors.textMuted} />
                             </TouchableOpacity>
                         </View>
 
@@ -448,7 +448,6 @@ export function MindfulnessScreen() {
                         <Button
                             title="Save Mood (+5 XP)"
                             onPress={handleSaveMood}
-                            color={selectedMood.color}
                         />
                         </View>
                     </View>
@@ -471,7 +470,7 @@ export function MindfulnessScreen() {
                         <View style={styles.modalHeader}>
                             <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Journal Entry</Text>
                             <TouchableOpacity onPress={() => setShowJournalModal(false)}>
-                                <Text style={[styles.modalClose, { color: colors.textMuted }]}>✕</Text>
+                                <Ionicons name="close" size={24} color={colors.textMuted} />
                             </TouchableOpacity>
                         </View>
 
@@ -488,7 +487,6 @@ export function MindfulnessScreen() {
                         <Button
                             title="Save Entry (+10 XP)"
                             onPress={handleSaveJournal}
-                            color="#8B5CF6"
                             disabled={!journalContent.trim()}
                         />
                         </View>
@@ -512,7 +510,7 @@ export function MindfulnessScreen() {
                         <View style={styles.modalHeader}>
                             <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Gratitude Log</Text>
                             <TouchableOpacity onPress={() => setShowGratitudeModal(false)}>
-                                <Text style={[styles.modalClose, { color: colors.textMuted }]}>✕</Text>
+                                <Ionicons name="close" size={24} color={colors.textMuted} />
                             </TouchableOpacity>
                         </View>
 
@@ -538,7 +536,6 @@ export function MindfulnessScreen() {
                         <Button
                             title="Save (+5 XP)"
                             onPress={handleSaveGratitude}
-                            color="#F59E0B"
                             disabled={!gratitudeItems.some(i => i.trim())}
                         />
                         </View>

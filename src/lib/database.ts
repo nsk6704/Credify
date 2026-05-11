@@ -543,6 +543,7 @@ export async function loadAppState(): Promise<Partial<AppState>> {
         const style = await getSetting('style');
         const streakMode = await getSetting('streakMode');
         const weightUnit = await getSetting('weightUnit');
+        const colorScheme = await getSetting('colorScheme');
     
         // Normalize streak mode to the expected type ('all' | 'any')
         const normalizedStreakMode = (streakMode === 'all' || streakMode === 'any') ? (streakMode as 'all' | 'any') : 'any';
@@ -578,6 +579,7 @@ export async function loadAppState(): Promise<Partial<AppState>> {
                 style: (style as 'modern' | 'classic') || 'modern',
                 streakMode: normalizedStreakMode,
                 weightUnit: (weightUnit as 'kg' | 'lb') || 'kg',
+                colorScheme: (colorScheme as 'premium' | 'colorful') || 'premium',
             },
         };
 }

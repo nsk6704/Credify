@@ -53,8 +53,8 @@ export function WeeklyGratitudeSummary({
         return (
             <Card style={styles.container}>
                 <View style={styles.header}>
-                    <View style={[styles.iconContainer, { backgroundColor: '#F59E0B20', borderRadius: styleConfig.borderRadius.sm }]}>
-                        <Ionicons name="heart" size={20} color="#F59E0B" />
+                    <View style={[styles.iconContainer, { backgroundColor: colors.primary + '15', borderRadius: styleConfig.borderRadius.sm }]}>
+                        <Ionicons name="heart" size={20} color={colors.primary} />
                     </View>
                     <Text style={[styles.title, { color: colors.textPrimary }]}>Weekly Gratitude</Text>
                 </View>
@@ -73,8 +73,8 @@ export function WeeklyGratitudeSummary({
                 onPress={() => setIsExpanded(!isExpanded)}
                 activeOpacity={0.7}
             >
-                <View style={[styles.iconContainer, { backgroundColor: '#F59E0B20', borderRadius: styleConfig.borderRadius.sm }]}>
-                    <Ionicons name="heart" size={20} color="#F59E0B" />
+                <View style={[styles.iconContainer, { backgroundColor: colors.primary + '15', borderRadius: styleConfig.borderRadius.sm }]}>
+                    <Ionicons name="heart" size={20} color={colors.primary} />
                 </View>
                 <View style={styles.headerText}>
                     <Text style={[styles.title, { color: colors.textPrimary }]}>Weekly Gratitude</Text>
@@ -106,7 +106,7 @@ export function WeeklyGratitudeSummary({
                             </Text>
                         </TouchableOpacity>
                         
-                        <Text style={[styles.itemCount, { color: '#F59E0B' }]}>
+                        <Text style={[styles.itemCount, { color: colors.primary }]}>
                             {summary.totalItems} {summary.totalItems === 1 ? 'item' : 'items'}
                         </Text>
                         
@@ -135,7 +135,7 @@ export function WeeklyGratitudeSummary({
                                 </Text>
                                 {group.items.map((item, itemIndex) => (
                                     <View key={`${group.date}-${itemIndex}-${item.substring(0, 20)}`} style={styles.gratitudeItem}>
-                                        <View style={[styles.bullet, { backgroundColor: '#F59E0B' }]} />
+                                        <View style={[styles.bullet, { backgroundColor: colors.primary }]} />
                                         <Text style={[styles.itemText, { color: colors.textPrimary }]}>
                                             {item}
                                         </Text>
