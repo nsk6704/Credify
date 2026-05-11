@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, ActivityIndicator, StyleSheet, Text, StatusBar } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -11,6 +11,7 @@ import { FontSize, FontWeight } from './constants/theme';
 
 function AppContent() {
     const { state } = useApp();
+    const { colors, isDark } = useTheme();
     const [showSplash, setShowSplash] = useState(true);
 
     useEffect(() => {
@@ -20,6 +21,24 @@ function AppContent() {
         }
     }, [state.isLoading]);
 
+    const navigationTheme = useMemo(() => ({
+        dark: isDark,
+        colors: {
+            primary: colors.primary,
+            background: colors.background,
+            card: colors.surface,
+            text: colors.textPrimary,
+            border: colors.border,
+            notification: colors.primary,
+        },
+        fonts: {
+            regular: { fontFamily: 'System', fontWeight: '400' as const },
+            medium: { fontFamily: 'System', fontWeight: '500' as const },
+            bold: { fontFamily: 'System', fontWeight: '700' as const },
+            heavy: { fontFamily: 'System', fontWeight: '900' as const },
+        },
+    }), [colors, isDark]);
+
     // Loading screen
     if (state.isLoading || showSplash) {
         return <Splash />;
@@ -27,7 +46,7 @@ function AppContent() {
 
     // Main app
     return (
-        <NavigationContainer>
+        <NavigationContainer theme={navigationTheme}>
             <MainNavigator />
         </NavigationContainer>
     );

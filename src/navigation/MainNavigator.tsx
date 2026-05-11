@@ -48,6 +48,7 @@ export function MainNavigator() {
             screenOptions={({ route }) => ({
                 headerShown: false,
                 animation: 'shift',
+                sceneContainerStyle: { backgroundColor: colors.background },
                 tabBarStyle: {
                     backgroundColor: colors.surface,
                     borderTopWidth: styleConfig.borderWidth,
