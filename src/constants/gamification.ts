@@ -45,26 +45,26 @@ export const XP_CONFIG = {
 
 // Expense categories
 export const EXPENSE_CATEGORIES = [
-    { id: 'food', name: 'Food & Dining', icon: '🍔', color: '#F97316' },
-    { id: 'transport', name: 'Transport', icon: '🚗', color: '#3B82F6' },
-    { id: 'shopping', name: 'Shopping', icon: '🛍️', color: '#EC4899' },
-    { id: 'entertainment', name: 'Entertainment', icon: '🎬', color: '#8B5CF6' },
-    { id: 'bills', name: 'Bills & Utilities', icon: '📄', color: '#6366F1' },
-    { id: 'health', name: 'Health', icon: '💊', color: '#10B981' },
-    { id: 'education', name: 'Education', icon: '📚', color: '#14B8A6' },
-    { id: 'other', name: 'Other', icon: '📦', color: '#64748B' },
+    { id: 'food', name: 'Food & Dining', icon: 'restaurant', color: '#F97316' },
+    { id: 'transport', name: 'Transport', icon: 'car', color: '#3B82F6' },
+    { id: 'shopping', name: 'Shopping', icon: 'cart', color: '#EC4899' },
+    { id: 'entertainment', name: 'Entertainment', icon: 'film', color: '#8B5CF6' },
+    { id: 'bills', name: 'Bills & Utilities', icon: 'receipt', color: '#6366F1' },
+    { id: 'health', name: 'Health', icon: 'medkit', color: '#10B981' },
+    { id: 'education', name: 'Education', icon: 'book', color: '#14B8A6' },
+    { id: 'other', name: 'Other', icon: 'cube', color: '#64748B' },
 ];
 
 // Workout types
 export const WORKOUT_TYPES = [
-    { id: 'running', name: 'Running', icon: '🏃', color: '#F97316' },
-    { id: 'cycling', name: 'Cycling', icon: '🚴', color: '#3B82F6' },
-    { id: 'gym', name: 'Gym', icon: '🏋️', color: '#8B5CF6' },
-    { id: 'yoga', name: 'Yoga', icon: '🧘', color: '#06B6D4' },
-    { id: 'swimming', name: 'Swimming', icon: '🏊', color: '#0EA5E9' },
-    { id: 'walking', name: 'Walking', icon: '🚶', color: '#10B981' },
-    { id: 'sports', name: 'Sports', icon: '⚽', color: '#22C55E' },
-    { id: 'other', name: 'Other', icon: '💪', color: '#64748B' },
+    { id: 'running', name: 'Running', icon: 'walk', color: '#F97316' },
+    { id: 'cycling', name: 'Cycling', icon: 'bicycle', color: '#3B82F6' },
+    { id: 'gym', name: 'Gym', icon: 'barbell', color: '#8B5CF6' },
+    { id: 'yoga', name: 'Yoga', icon: 'accessibility', color: '#06B6D4' },
+    { id: 'swimming', name: 'Swimming', icon: 'water', color: '#0EA5E9' },
+    { id: 'walking', name: 'Walking', icon: 'walk', color: '#10B981' },
+    { id: 'sports', name: 'Sports', icon: 'football', color: '#22C55E' },
+    { id: 'other', name: 'Other', icon: 'fitness', color: '#64748B' },
 ];
 
 // Mood options

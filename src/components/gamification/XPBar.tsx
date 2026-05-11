@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Spacing, FontSize, FontWeight } from '../../constants/theme';
 import { useApp, calculateLevel } from '../../context/AppContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -33,7 +34,7 @@ export function XPBar({ compact = false, showLevel = true }: XPBarProps) {
             {showLevel && (
                 <View style={styles.levelBadgeContainer}>
                     <View style={[styles.levelBadge, { backgroundColor: colors.primary, borderRadius: styleConfig.borderRadius.md }]}>
-                        <Text style={[styles.levelNumber, { color: '#FFFFFF' }]}>{levelInfo.level}</Text>
+                        <Text style={[styles.levelNumber, { color: colors.background }]}>{levelInfo.level}</Text>
                     </View>
                     <Text style={[styles.levelTitle, { color: colors.textPrimary }]}>{levelInfo.title}</Text>
                 </View>
@@ -87,7 +88,7 @@ export function StreakBadge({ count, label, size = 'md' }: StreakBadgeProps) {
                     gap: s.gap,
                 }
             ]}>
-                <Text style={[styles.streakIcon, { fontSize: s.icon }]}>🔥</Text>
+                <Ionicons name="flame" size={s.icon} color={colors.streak} />
                 <Text style={[styles.streakCount, { fontSize: s.text, color: colors.streak }]}>{count}</Text>
             </View>
             {label && <Text style={[styles.streakLabel, { color: colors.textSecondary }]}>{label}</Text>}

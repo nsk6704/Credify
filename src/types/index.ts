@@ -146,12 +146,14 @@ export interface MindfulnessState {
 
 // Settings types
 export type AppStyle = 'modern' | 'minimal' | 'classic' | 'vibrant';
+export type ColorScheme = 'premium' | 'colorful';
 
 export interface AppSettings {
     streakMode: 'all' | 'any'; // 'all' = all categories required, 'any' = any one category counts
     theme: 'dark' | 'light';
     style: AppStyle;
     weightUnit: 'kg' | 'lb';
+    colorScheme: ColorScheme;
 }
 
 // App state

@@ -18,11 +18,11 @@ import * as FileSystem from 'expo-file-system';
 import { StorageAccessFramework } from 'expo-file-system/legacy';
 import * as DocumentPicker from 'expo-document-picker';
 import * as Sharing from 'expo-sharing';
-import { Spacing, FontSize, FontWeight, Currency, BorderRadius } from '../constants/theme';
+import { Spacing, FontSize, FontWeight, Currency, BorderRadius, PremiumDarkTheme, DarkTheme } from '../constants/theme';
 import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
 import { Button, Card } from '../components';
-import { AppStyle } from '../types';
+import { AppStyle, ColorScheme } from '../types';
 import * as Database from '../lib/database';
 
 interface SettingsScreenProps {
@@ -31,7 +31,7 @@ interface SettingsScreenProps {
 
 export function SettingsScreen({ onClose }: SettingsScreenProps) {
     const { state, dispatch, resetData, updateSettings } = useApp();
-    const { colors, styleConfig, isDark } = useTheme();
+    const { colors, styleConfig, isDark, colorScheme } = useTheme();
     const { financial, health, mindfulness, settings } = state;
 
     const [showBudgetModal, setShowBudgetModal] = useState(false);
@@ -142,6 +142,10 @@ export function SettingsScreen({ onClose }: SettingsScreenProps) {
 
     const handleStyleChange = async (style: AppStyle) => {
         await updateSettings({ style });
+    };
+
+    const handleColorSchemeChange = async (cs: ColorScheme) => {
+        await updateSettings({ colorScheme: cs });
     };
 
     const handleResetData = () => {
@@ -268,6 +272,11 @@ export function SettingsScreen({ onClose }: SettingsScreenProps) {
         ? 'You must log activity in ALL categories (Finance, Health, Mindfulness) to maintain your streak.'
         : 'Log activity in ANY category to maintain your streak.';
 
+    const colorSchemeOptions: Record<ColorScheme, { name: string; desc: string }> = {
+        premium: { name: 'Premium', desc: 'Black, white, single accent' },
+        colorful: { name: 'Colorful', desc: 'Category-colored accents' },
+    };
+
     const styleDescriptions: Record<AppStyle, { name: string; desc: string }> = {
         modern: { name: 'Modern', desc: 'Smooth curves, subtle shadows' },
         minimal: { name: 'Minimal', desc: 'Clean lines, no borders' },
@@ -333,7 +342,48 @@ export function SettingsScreen({ onClose }: SettingsScreenProps) {
                         </TouchableOpacity>
                     </View>
 
-                    
+                    {/* Color Scheme Selection */}
+                    <Text style={[styles.subsectionTitle, { color: colors.textSecondary }]}>Color Scheme</Text>
+                    <View style={styles.colorSchemeRow}>
+                        {(Object.keys(colorSchemeOptions) as ColorScheme[]).map((option) => {
+                            const active = settings?.colorScheme === option;
+                            return (
+                                <TouchableOpacity
+                                    key={option}
+                                    style={[
+                                        styles.colorSchemeCard,
+                                        { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: styleConfig.borderRadius.md },
+                                        active && { borderColor: colors.primary, borderWidth: 2 },
+                                    ]}
+                                    onPress={() => handleColorSchemeChange(option)}
+                                >
+                                    <View style={[styles.colorSchemePreview, { backgroundColor: colors.surfaceLighter, borderRadius: styleConfig.borderRadius.sm }]}>
+                                        {option === 'premium' ? (
+                                            <>
+                                                <View style={[styles.colorSchemeDot, { backgroundColor: colors.primary }]} />
+                                                <View style={[styles.colorSchemeDot, { backgroundColor: colors.textMuted }]} />
+                                                <View style={[styles.colorSchemeDot, { backgroundColor: colors.primary }]} />
+                                                <View style={[styles.colorSchemeDot, { backgroundColor: colors.textMuted }]} />
+                                            </>
+                                        ) : (
+                                            <>
+                                                <View style={[styles.colorSchemeDot, { backgroundColor: DarkTheme.primary }]} />
+                                                <View style={[styles.colorSchemeDot, { backgroundColor: DarkTheme.financial }]} />
+                                                <View style={[styles.colorSchemeDot, { backgroundColor: DarkTheme.health }]} />
+                                                <View style={[styles.colorSchemeDot, { backgroundColor: DarkTheme.mindfulness }]} />
+                                            </>
+                                        )}
+                                    </View>
+                                    <Text style={[styles.styleName, { color: active ? colors.primary : colors.textPrimary }]}>
+                                        {colorSchemeOptions[option].name}
+                                    </Text>
+                                    <Text style={[styles.styleDesc, { color: colors.textMuted }]}>
+                                        {colorSchemeOptions[option].desc}
+                                    </Text>
+                                </TouchableOpacity>
+                            );
+                        })}
+                    </View>
 
                     {/* Style Selection */}
                     <Text style={[styles.subsectionTitle, { color: colors.textSecondary }]}>Visual Style</Text>
@@ -924,6 +974,31 @@ const styles = StyleSheet.create({
     settingDesc: {
         fontSize: FontSize.xs,
         marginTop: 2,
+    },
+    colorSchemeRow: {
+        flexDirection: 'row',
+        gap: Spacing.sm,
+        marginBottom: Spacing.md,
+    },
+    colorSchemeCard: {
+        flex: 1,
+        padding: Spacing.md,
+        borderWidth: 1,
+        alignItems: 'center',
+    },
+    colorSchemePreview: {
+        width: '100%',
+        height: 40,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: Spacing.sm,
+        marginBottom: Spacing.sm,
+    },
+    colorSchemeDot: {
+        width: 14,
+        height: 14,
+        borderRadius: 7,
     },
     styleGrid: {
         flexDirection: 'row',

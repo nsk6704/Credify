@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useMemo, ReactNode } from 'react';
 import { useApp } from './AppContext';
-import { DarkTheme, LightTheme, ThemeColors, BorderRadius as BR, Spacing as SP } from '../constants/theme';
-import { AppStyle } from '../types';
+import { DarkTheme, LightTheme, PremiumDarkTheme, PremiumLightTheme, ThemeColors, BorderRadius as BR, Spacing as SP } from '../constants/theme';
+import { AppStyle, ColorScheme } from '../types';
 
 // Style configurations for different visual styles
 interface StyleConfig {
@@ -60,6 +60,7 @@ interface ThemeContextValue {
     styleConfig: StyleConfig;
     isDark: boolean;
     style: AppStyle;
+    colorScheme: ColorScheme;
 }
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
@@ -74,7 +75,10 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 
     const value = useMemo<ThemeContextValue>(() => {
         const isDark = settings?.theme !== 'light';
-        const colors = isDark ? DarkTheme : LightTheme;
+        const cs = settings?.colorScheme || 'premium';
+        const colors = isDark
+            ? (cs === 'premium' ? PremiumDarkTheme : DarkTheme)
+            : (cs === 'premium' ? PremiumLightTheme : LightTheme);
         const style = settings?.style || 'modern';
         const styleConfig = StyleConfigs[style];
 
@@ -83,8 +87,9 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
             styleConfig,
             isDark,
             style,
+            colorScheme: cs,
         };
-    }, [settings?.theme, settings?.style]);
+    }, [settings?.theme, settings?.style, settings?.colorScheme]);
 
     return (
         <ThemeContext.Provider value={value}>
@@ -98,14 +103,15 @@ export function useTheme(): ThemeContextValue {
     if (!context) {
         // Return default values if used outside provider
         return {
-            colors: DarkTheme,
+            colors: PremiumDarkTheme,
             styleConfig: StyleConfigs.modern,
             isDark: true,
             style: 'modern',
+            colorScheme: 'premium',
         };
     }
     return context;
 }
 
 // Export for convenience
-export { DarkTheme, LightTheme, StyleConfigs };
+export { DarkTheme, LightTheme, PremiumDarkTheme, PremiumLightTheme, StyleConfigs };

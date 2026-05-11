@@ -17,6 +17,7 @@ import { Spacing, FontSize, FontWeight, BorderRadius, Currency } from '../consta
 import { EXPENSE_CATEGORIES, XP_CONFIG } from '../constants/gamification';
 import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
+import { Ionicons } from '@expo/vector-icons';
 import { Button, Card } from '../components';
 import { Expense } from '../types';
 import { format, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
@@ -24,7 +25,7 @@ import * as Database from '../lib/database';
 
 export function FinancialScreen() {
     const { state, dispatch, addXP, updateStreaks } = useApp();
-    const { colors, styleConfig } = useTheme();
+    const { colors, styleConfig, colorScheme } = useTheme();
     const { financial } = state;
     const isDark = state.settings.theme === 'dark';
     const [showAddModal, setShowAddModal] = useState(false);
@@ -136,8 +137,8 @@ export function FinancialScreen() {
                         <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Spending by Category</Text>
                         {categoryTotals.map(cat => (
                             <View key={cat.id} style={styles.categoryItem}>
-                                <View style={[styles.categoryIcon, { backgroundColor: cat.color + '20' }]}>
-                                    <Text style={styles.categoryEmoji}>{cat.icon}</Text>
+                                <View style={[styles.categoryIcon, { backgroundColor: colorScheme === 'premium' ? colors.primary + '15' : cat.color + '20' }]}>
+                                    <Ionicons name={cat.icon} size={18} color={colorScheme === 'premium' ? colors.primary : cat.color} />
                                 </View>
                                 <View style={styles.categoryInfo}>
                                     <Text style={[styles.categoryName, { color: colors.textPrimary }]}>{cat.name}</Text>
@@ -147,7 +148,7 @@ export function FinancialScreen() {
                                                 styles.categoryFill,
                                                 {
                                                     width: `${(cat.total / monthlyTotal) * 100}%`,
-                                                    backgroundColor: cat.color,
+                                                    backgroundColor: colorScheme === 'premium' ? colors.primary : cat.color,
                                                 },
                                             ]}
                                         />
@@ -167,8 +168,8 @@ export function FinancialScreen() {
                             const category = EXPENSE_CATEGORIES.find(c => c.id === expense.category);
                             return (
                                 <View key={expense.id} style={[styles.transactionItem, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: styleConfig.borderRadius.md }]}>
-                                    <View style={[styles.transactionIcon, { backgroundColor: (category?.color || colors.textMuted) + '20' }]}>
-                                        <Text>{category?.icon || '📦'}</Text>
+                                    <View style={[styles.transactionIcon, { backgroundColor: colorScheme === 'premium' ? colors.primary + '15' : (category?.color || colors.textMuted) + '20' }]}>
+                                        <Ionicons name={category?.icon || 'cube'} size={18} color={colorScheme === 'premium' ? colors.primary : (category?.color || colors.textMuted)} />
                                     </View>
                                     <View style={styles.transactionInfo}>
                                         <Text style={[styles.transactionDesc, { color: colors.textPrimary }]}>{expense.description}</Text>
@@ -205,7 +206,7 @@ export function FinancialScreen() {
                         <View style={styles.modalHeader}>
                             <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Add Expense</Text>
                             <TouchableOpacity onPress={() => setShowAddModal(false)}>
-                                <Text style={[styles.modalClose, { color: colors.textMuted }]}>✕</Text>
+                                <Ionicons name="close" size={24} color={colors.textMuted} />
                             </TouchableOpacity>
                         </View>
 
@@ -236,11 +237,11 @@ export function FinancialScreen() {
                                             style={[
                                                 styles.categoryOption,
                                                 { backgroundColor: colors.surfaceLight, borderColor: colors.border, borderRadius: styleConfig.borderRadius.md },
-                                                selectedCategory.id === cat.id && { borderColor: cat.color, backgroundColor: cat.color + '20' },
+                                                selectedCategory.id === cat.id && { borderColor: colorScheme === 'premium' ? colors.primary : cat.color, backgroundColor: colorScheme === 'premium' ? colors.primary + '15' : cat.color + '20' },
                                             ]}
                                             onPress={() => setSelectedCategory(cat)}
                                         >
-                                            <Text style={styles.categoryOptionIcon}>{cat.icon}</Text>
+                                            <Ionicons name={cat.icon} size={22} color={colorScheme === 'premium' ? colors.primary : cat.color} />
                                             <Text style={[styles.categoryOptionName, { color: colors.textPrimary }]}>{cat.name}</Text>
                                         </TouchableOpacity>
                                     ))}
