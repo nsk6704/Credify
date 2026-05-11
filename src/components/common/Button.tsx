@@ -35,7 +35,7 @@ export function Button({
     textStyle,
     color,
 }: ButtonProps) {
-    const { colors, styleConfig } = useTheme();
+    const { colors, styleConfig, isDark } = useTheme();
     
     const sizeStyles = {
         sm: { paddingVertical: Spacing.sm, paddingHorizontal: Spacing.md },
@@ -84,7 +84,7 @@ export function Button({
                 return { ...base, color: color || colors.primary };
             default: {
                 const bg = color || colors.primary;
-                const textColor = bg === colors.textPrimary ? colors.background : colors.textPrimary;
+                const textColor = bg === colors.textPrimary ? colors.background : (isDark ? colors.textPrimary : '#FFFFFF');
                 return { ...base, color: textColor };
             }
         }
